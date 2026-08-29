@@ -1,6 +1,101 @@
-@Corridor.OktaSim_HostAddress = http://localhost:5284
+@issuer = http://localhost:8080
+@scimToken = corridor-scim-token
 
-GET {{Corridor.OktaSim_HostAddress}}/weatherforecast/
-Accept: application/json
+### Liveness
+GET {{issuer}}/healthz
 
-###
+### Admin console
+GET {{issuer}}/
+
+### OIDC discovery
+GET {{issuer}}/.well-known/openid-configuration
+
+### JWKS (two kids: current + retired)
+GET {{issuer}}/jwks
+
+### Authorize, portal confidential client (renders login form without login_hint)
+# GET {{issuer}}/authorize?client_id=portal&redirect_uri=http://localhost:5200/signin-oidc&response_type=code&scope=openid%20profile&state=demo-state
+
+### Authorize, spa public client with PKCE S256 (challenge = base64url(sha256(verifier)))
+# GET {{issuer}}/authorize?client_id=spa&redirect_uri=http://localhost:5173/callback&response_type=code&scope=openid%20profile&code_challenge=CHALLENGE&code_challenge_method=S256&login_hint=inspector@corridor.example&state=demo-state&nonce=demo-nonce
+
+### Token exchange, confidential client via Basic auth
+# POST {{issuer}}/token
+# Authorization: Basic cG9ydGFsOmNvcnJpZG9yLXBvcnRhbC1zZWNyZXQ=
+# Content-Type: application/x-www-form-urlencoded
+#
+# grant_type=authorization_code&code=THE_CODE&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2Fsignin-oidc
+
+### Token exchange, spa public client with PKCE verifier
+# POST {{issuer}}/token
+# Content-Type: application/x-www-form-urlencoded
+#
+# grant_type=authorization_code&code=THE_CODE&client_id=spa&redirect_uri=http%3A%2F%2Flocalhost%3A5173%2Fcallback&code_verifier=THE_VERIFIER
+
+### Legacy service token (client credentials)
+POST {{issuer}}/token
+Authorization: Basic bGVnYWN5OmNvcnJpZG9yLWxlZ2FjeS1zZWNyZXQ=
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+
+### Userinfo (paste a bearer token)
+# GET {{issuer}}/userinfo
+# Authorization: Bearer THE_ACCESS_TOKEN
+
+### Logout with registered post-logout redirect
+# GET {{issuer}}/logout?client_id=portal&post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&state=demo-state
+
+### SAML IdP metadata
+GET {{issuer}}/saml/metadata
+
+### SCIM: list users
+GET {{issuer}}/scim/v2/Users
+Authorization: Bearer {{scimToken}}
+
+### SCIM: filtered list
+GET {{issuer}}/scim/v2/Users?filter=userName%20eq%20%22officer%40corridor.example%22
+Authorization: Bearer {{scimToken}}
+
+### SCIM: create a user
+POST {{issuer}}/scim/v2/Users
+Authorization: Bearer {{scimToken}}
+Content-Type: application/scim+json
+
+{
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User", "urn:corridor:scim:1.0:User"],
+  "userName": "analyst@corridor.example",
+  "displayName": "Rosa Kellerman",
+  "active": true,
+  "groups": [{ "display": "trace-reviewers" }],
+  "urn:corridor:scim:1.0:User": { "role": "Clerk" }
+}
+
+### SCIM: patch (replace active)
+# PATCH {{issuer}}/scim/v2/Users/THE_ID
+# Authorization: Bearer {{scimToken}}
+# Content-Type: application/scim+json
+#
+# { "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"], "Operations": [{ "op": "replace", "path": "active", "value": false }] }
+
+### XACML PDP: Officer reads trace cases -> Permit
+POST {{issuer}}/pdp/decide
+Content-Type: application/xacml+xml
+
+<Request xmlns="urn:oasis:names:tc:xacml:2.0:context:schema:os">
+  <Subject>
+    <Attribute AttributeId="urn:oasis:names:tc:xacml:2.0:subject:role">
+      <AttributeValue>Officer</AttributeValue>
+    </Attribute>
+  </Subject>
+  <Resource>
+    <Attribute AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id">
+      <AttributeValue>trace-cases</AttributeValue>
+    </Attribute>
+  </Resource>
+  <Action>
+    <Attribute AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id">
+      <AttributeValue>read</AttributeValue>
+    </Attribute>
+  </Action>
+</Request>

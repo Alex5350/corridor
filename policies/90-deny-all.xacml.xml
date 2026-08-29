@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Corridor XACML policy 3 of 3: deny-all fallback. Loaded last so it decides
+  every request the two permit policies do not match (default deny).
+  Synthetic demo policy; evaluated by okta-sim's PDP at POST /pdp/decide.
+-->
+<Policy xmlns="urn:oasis:names:tc:xacml:2.0:policy:schema:os"
+        PolicyId="corridor:policy:deny-all:1"
+        RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:first-applicable">
+  <Description>Fallback: deny anything not explicitly permitted above.</Description>
+  <Rule RuleId="corridor:rule:deny-all" Effect="Deny"/>
+</Policy>
