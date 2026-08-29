@@ -1,0 +1,14 @@
+bin/
+obj/
+node_modules/
+dist/
+*.user
+.vs/
+.idea/
+*.log
+.env
+TestResults/
+coverage/
+# global gitignore on this machine eats these; keep them tracked in-repo
+!docker-compose*.yml
+!packages/
