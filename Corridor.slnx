@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Corridor.AdfsSim/Corridor.AdfsSim.csproj" />
+    <Project Path="src/Corridor.Legacy/Corridor.Legacy.csproj" />
+    <Project Path="src/Corridor.OktaSim/Corridor.OktaSim.csproj" />
+    <Project Path="src/Corridor.Ops.Tool/Corridor.Ops.Tool.vbproj" />
+    <Project Path="src/Corridor.Portal/Corridor.Portal.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Corridor.AdfsSim.Tests/Corridor.AdfsSim.Tests.csproj" />
+    <Project Path="tests/Corridor.IntegrationTests/Corridor.IntegrationTests.csproj" />
+    <Project Path="tests/Corridor.Legacy.Tests/Corridor.Legacy.Tests.csproj" />
+    <Project Path="tests/Corridor.OktaSim.Tests/Corridor.OktaSim.Tests.csproj" />
+    <Project Path="tests/Corridor.Ops.Tool.Tests/Corridor.Ops.Tool.Tests.csproj" />
+    <Project Path="tests/Corridor.Portal.Tests/Corridor.Portal.Tests.csproj" />
+  </Folder>
+</Solution>

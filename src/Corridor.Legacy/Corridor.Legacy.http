@@ -1,0 +1,6 @@
+@Corridor.Legacy_HostAddress = http://localhost:5267
+
+GET {{Corridor.Legacy_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

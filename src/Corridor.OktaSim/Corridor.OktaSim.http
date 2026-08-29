@@ -1,0 +1,6 @@
+@Corridor.OktaSim_HostAddress = http://localhost:5284
+
+GET {{Corridor.OktaSim_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
