@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="720" viewBox="0 0 1300 720" role="img" aria-label="Corridor: an ADFS-to-Okta identity migration - three applications cross from legacy SAML to modern OIDC with no downtime window · sky = identity · emerald = applications · amber = data · rose = operators. Animated flows: colored dashes move along request paths; node borders breathe.">
+  <title>Corridor: an ADFS-to-Okta identity migration</title>
+  <defs>
+    <pattern id="fi-dark-dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#1B2737"/>
+    </pattern>
+  </defs>
+  <style>
+    .fi-dark-node { fill: #0E1620; stroke: #22304A; stroke-width: 1.2; }
+    .fi-dark-edge { stroke: #1F2B3D; stroke-width: 1.5; fill: none; }
+    .fi-dark-pulse { animation: fi-dark-pulse 3s ease-in-out infinite; }
+    .fi-dark-flow-sky { stroke: #38BDF8; stroke-width: 2; fill: none; stroke-dasharray: 5 11; animation: fi-dark-dash-sky-f 1.5s linear infinite; }
+    .fi-dark-flow-sky-b { animation-name: fi-dark-dash-sky-b; }
+    .fi-dark-flow-emerald { stroke: #34D399; stroke-width: 2; fill: none; stroke-dasharray: 5 11; animation: fi-dark-dash-emerald-f 1.5s linear infinite; }
+    .fi-dark-flow-emerald-b { animation-name: fi-dark-dash-emerald-b; }
+    .fi-dark-flow-amber { stroke: #F59E0B; stroke-width: 2; fill: none; stroke-dasharray: 5 11; animation: fi-dark-dash-amber-f 1.5s linear infinite; }
+    .fi-dark-flow-amber-b { animation-name: fi-dark-dash-amber-b; }
+    .fi-dark-flow-rose { stroke: #F87171; stroke-width: 2; fill: none; stroke-dasharray: 5 11; animation: fi-dark-dash-rose-f 1.5s linear infinite; }
+    .fi-dark-flow-rose-b { animation-name: fi-dark-dash-rose-b; }
+    .fi-dark-packet { animation: fi-dark-ride 1.5s linear infinite; }
+    @keyframes fi-dark-pulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: .5; } }
+    @keyframes fi-dark-ride { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+    @keyframes fi-dark-dash-sky-f { to { stroke-dashoffset: -16; } }
+    @keyframes fi-dark-dash-sky-b { to { stroke-dashoffset: 16; } }
+    @keyframes fi-dark-dash-emerald-f { to { stroke-dashoffset: -16; } }
+    @keyframes fi-dark-dash-emerald-b { to { stroke-dashoffset: 16; } }
+    @keyframes fi-dark-dash-amber-f { to { stroke-dashoffset: -16; } }
+    @keyframes fi-dark-dash-amber-b { to { stroke-dashoffset: 16; } }
+    @keyframes fi-dark-dash-rose-f { to { stroke-dashoffset: -16; } }
+    @keyframes fi-dark-dash-rose-b { to { stroke-dashoffset: 16; } }
+    @media (prefers-reduced-motion: reduce) { .fi-dark-flow-sky, .fi-dark-flow-emerald, .fi-dark-flow-amber, .fi-dark-flow-rose { animation: none; } .fi-dark-pulse, .fi-dark-packet { animation: none; } }
+  </style>
+  <rect width="1300" height="720" fill="#0B1118" style="fill:#0B1118 !important"/>
+  <rect width="1300" height="720" fill="url(#fi-dark-dots)" opacity=".5" style="fill:url(#fi-dark-dots) !important"/>
+  <text x="40" y="46" style="font: 600 20px ui-sans-serif, system-ui, sans-serif !important; fill: #E2E8F0 !important" fill="#E2E8F0">Corridor: an ADFS-to-Okta identity migration</text>
+  <text x="40" y="68" style="font: 12px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #64748B !important" fill="#64748B">three applications cross from legacy SAML to modern OIDC with no downtime window · sky = identity · emerald = applications · amber = data · rose = operators</text>
+  <rect x="1060" y="30" width="200" height="26" rx="13" fill="none" stroke="#38BDF8" stroke-opacity=".5" style="fill: none !important; stroke: #38BDF8 !important; stroke-opacity: .5 !important"/>
+  <text x="1160" y="47" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #38BDF8 !important" fill="#38BDF8">cutover without downtime</text>
+  <path class="fi-dark-edge" d="M300,155 C355,175 400,140 480,100" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-sky" d="M300,155 C355,175 400,140 480,100" fill="none" stroke="#38BDF8" stroke-width="2" style="stroke: #38BDF8 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="390" y="130" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #38BDF8 !important" fill="#38BDF8">SAML</text>
+  <path class="fi-dark-edge" d="M300,180 C400,300 430,450 480,480" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-sky" d="M300,180 C400,300 430,450 480,480" fill="none" stroke="#38BDF8" stroke-width="2" style="stroke: #38BDF8 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="390" y="322" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #38BDF8 !important" fill="#38BDF8">signed assertions</text>
+  <path class="fi-dark-edge" d="M300,430 C380,330 420,140 480,100" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-sky" d="M300,430 C380,330 420,140 480,100" fill="none" stroke="#38BDF8" stroke-width="2" style="stroke: #38BDF8 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="390" y="257" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #38BDF8 !important" fill="#38BDF8">OIDC code</text>
+  <path class="fi-dark-edge" d="M220,430 C350,430 350,380 480,380" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-sky" d="M220,430 C350,430 350,380 480,380" fill="none" stroke="#38BDF8" stroke-width="2" style="stroke: #38BDF8 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="350" y="397" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #38BDF8 !important" fill="#38BDF8">code + PKCE</text>
+  <circle class="fi-dark-packet" r="3.5" fill="#7DD3FC" style="offset-path: path('M220,430 C350,430 350,380 480,380'); fill: #7DD3FC !important"/>
+  <path class="fi-dark-edge" d="M300,455 C400,530 430,505 480,492" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-sky" d="M300,455 C400,530 430,505 480,492" fill="none" stroke="#38BDF8" stroke-width="2" style="stroke: #38BDF8 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="390" y="485" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #38BDF8 !important" fill="#38BDF8">JWT + JWKS</text>
+  <path class="fi-dark-edge" d="M500,175 C390,350 410,530 480,600" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-emerald" d="M500,175 C390,350 410,530 480,600" fill="none" stroke="#34D399" stroke-width="2" style="stroke: #34D399 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="445" y="380" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #34D399 !important" fill="#34D399">JSON calls</text>
+  <path class="fi-dark-edge" d="M578,590 V610" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-emerald" d="M578,590 V610" fill="none" stroke="#34D399" stroke-width="2" style="stroke: #34D399 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="594" y="582" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #34D399 !important" fill="#34D399">SOAP + cor:Security</text>
+  <path class="fi-dark-edge" d="M645,325 C770,420 705,565 560,612" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-emerald" d="M645,325 C770,420 705,565 560,612" fill="none" stroke="#34D399" stroke-width="2" style="stroke: #34D399 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="665" y="461" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #34D399 !important" fill="#34D399">assignments API</text>
+  <path class="fi-dark-edge" d="M657,485 H880" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-amber" d="M657,485 H880" fill="none" stroke="#F59E0B" stroke-width="2" style="stroke: #F59E0B !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="769" y="477" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #F59E0B !important" fill="#F59E0B">ADO.NET procs</text>
+  <circle class="fi-dark-packet" r="3.5" fill="#7DD3FC" style="offset-path: path('M657,485 H880'); fill: #7DD3FC !important"/>
+  <path class="fi-dark-edge" d="M610,140 C760,200 820,300 880,360" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-amber" d="M610,140 C760,200 820,300 880,360" fill="none" stroke="#F59E0B" stroke-width="2" style="stroke: #F59E0B !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="745" y="242" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #F59E0B !important" fill="#F59E0B">permits + state</text>
+  <path class="fi-dark-edge" d="M870,600 C700,560 400,520 250,470" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-rose fi-dark-flow-sky-b fi-dark-flow-emerald-b fi-dark-flow-amber-b fi-dark-flow-rose-b" d="M870,600 C700,560 400,520 250,470" fill="none" stroke="#F87171" stroke-width="2" style="stroke: #F87171 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="560" y="527" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #F87171 !important" fill="#F87171">jwks + discovery</text>
+  <path class="fi-dark-edge" d="M870,135 C730,165 620,150 560,115" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-rose fi-dark-flow-sky-b fi-dark-flow-emerald-b fi-dark-flow-amber-b fi-dark-flow-rose-b" d="M870,135 C730,165 620,150 560,115" fill="none" stroke="#F87171" stroke-width="2" style="stroke: #F87171 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="715" y="132" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #F87171 !important" fill="#F87171">every endpoint</text>
+  <rect class="fi-dark-node" x="60" y="120" width="177" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="80" y="146" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">ADFS-SIM</text>
+  <text x="80" y="168" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">legacy SAML 2.0 IdP</text>
+  <text x="80" y="186" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">signed assertions</text>
+  <text x="80" y="204" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">federation metadata</text>
+  <rect class="fi-dark-node fi-dark-pulse" x="60" y="420" width="160" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="80" y="446" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">OKTA-SIM</text>
+  <text x="80" y="468" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">OIDC + PKCE</text>
+  <text x="80" y="486" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">SAML + SCIM 2.0</text>
+  <text x="80" y="504" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">XACML decisions</text>
+  <rect class="fi-dark-node" x="480" y="90" width="177" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="500" y="116" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">PERMITPORTAL</text>
+  <text x="500" y="138" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">Razor MVC web app</text>
+  <text x="500" y="156" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">OIDC code flow</text>
+  <text x="500" y="174" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">dual-trust SAML ACS</text>
+  <rect class="fi-dark-node" x="480" y="270" width="184" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="500" y="296" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">FIELDINSIGHT SPA</text>
+  <text x="500" y="318" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">React public client</text>
+  <text x="500" y="336" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">PKCE only</text>
+  <text x="500" y="354" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">inspector checklists</text>
+  <rect class="fi-dark-node" x="480" y="470" width="177" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="500" y="496" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">TRACELINK SOAP</text>
+  <text x="500" y="518" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">CoreWCF service</text>
+  <text x="500" y="536" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">SAML or JWT tokens</text>
+  <text x="500" y="554" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">raw ADO.NET + procs</text>
+  <rect class="fi-dark-node fi-dark-pulse" x="480" y="610" width="213" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="500" y="636" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">REST BRIDGE</text>
+  <text x="500" y="658" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">/api/cases JSON</text>
+  <text x="500" y="676" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">translates to SOAP</text>
+  <text x="500" y="694" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">carries delegation token</text>
+  <rect class="fi-dark-node" x="880" y="380" width="228" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="900" y="406" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">SQL SERVER</text>
+  <text x="900" y="428" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">perm + trace + idn schemas</text>
+  <text x="900" y="446" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">transition-guarding procs</text>
+  <text x="900" y="464" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">migration state + audit</text>
+  <rect class="fi-dark-node" x="880" y="610" width="206" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="900" y="636" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">OPS TOOL (VB)</text>
+  <text x="900" y="658" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">metadata checks</text>
+  <text x="900" y="676" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">token decode + validate</text>
+  <text x="900" y="694" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">scim dump</text>
+  <rect class="fi-dark-node" x="880" y="100" width="228" height="102" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="900" y="126" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">API REGRESSION</text>
+  <text x="900" y="148" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">Postman + SoapUI + JMeter</text>
+  <text x="900" y="166" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">same contracts, every mode</text>
+</svg>

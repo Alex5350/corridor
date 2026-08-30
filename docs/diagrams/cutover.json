@@ -1,0 +1,26 @@
+{
+  "title": "The cutover: dual trust, per application",
+  "subtitle": "each app crosses from ADFS to Okta through a window where it accepts tokens from both · sky = ADFS trust · emerald = Okta trust · amber = shared state",
+  "chip": "no downtime window",
+  "width": 1300,
+  "height": 620,
+  "nodes": [
+    { "id": "apps", "label": "THE THREE APPS", "lines": ["portal · spa · legacy SOAP", "same code, three modes"], "x": 80, "y": 300, "pulse": true },
+
+    { "id": "phase1", "label": "1: ADFS ONLY", "lines": ["TrustMode = Adfs", "SAML everywhere", "baseline regression pass"], "x": 470, "y": 120 },
+    { "id": "phase2", "label": "2: DUAL TRUST", "lines": ["TrustMode = Dual", "SAML or JWT accepted", "both providers verified live"], "x": 470, "y": 300, "width": 200 },
+    { "id": "phase3", "label": "3: OKTA ONLY", "lines": ["TrustMode = Okta", "OIDC + JWT only", "rollback = flip back"], "x": 470, "y": 480 },
+
+    { "id": "state", "label": "SHARED STATE", "lines": ["idn.MigrationApps", "audit events row per flip"], "x": 900, "y": 300 },
+    { "id": "regress", "label": "REGRESSION GATE", "lines": ["Postman + SoapUI + JMeter", "run between every phase"], "x": 900, "y": 480, "pulse": true }
+  ],
+  "edges": [
+    { "from": "apps", "to": "phase1", "label": "start here", "color": "sky", "path": "M280,260 C350,200 400,150 470,130" },
+    { "from": "phase1", "to": "phase2", "label": "flip", "color": "amber" },
+    { "from": "phase2", "to": "phase3", "label": "flip, verified", "color": "emerald" },
+    { "from": "phase2", "to": "phase1", "label": "rollback if anything regresses", "color": "sky", "direction": "backward", "path": "M470,200 C420,210 420,230 470,240" },
+    { "from": "state", "to": "phase2", "label": "live mode row", "color": "amber", "direction": "backward" },
+    { "from": "state", "to": "regress", "label": "audit trail", "color": "amber" },
+    { "from": "regress", "to": "phase3", "label": "green gate", "color": "rose", "direction": "backward", "path": "M900,450 C800,420 700,460 670,478" }
+  ]
+}

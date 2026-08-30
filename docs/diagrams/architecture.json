@@ -1,0 +1,196 @@
+{
+  "title": "Corridor: an ADFS-to-Okta identity migration",
+  "subtitle": "three applications cross from legacy SAML to modern OIDC with no downtime window \u00b7 sky = identity \u00b7 emerald = applications \u00b7 amber = data \u00b7 rose = operators",
+  "chip": "cutover without downtime",
+  "width": 1300,
+  "height": 720,
+  "nodes": [
+    {
+      "id": "adfs",
+      "label": "ADFS-SIM",
+      "lines": [
+        "legacy SAML 2.0 IdP",
+        "signed assertions",
+        "federation metadata"
+      ],
+      "x": 60,
+      "y": 120
+    },
+    {
+      "id": "okta",
+      "label": "OKTA-SIM",
+      "lines": [
+        "OIDC + PKCE",
+        "SAML + SCIM 2.0",
+        "XACML decisions"
+      ],
+      "x": 60,
+      "y": 420,
+      "pulse": true
+    },
+    {
+      "id": "portal",
+      "label": "PERMITPORTAL",
+      "lines": [
+        "Razor MVC web app",
+        "OIDC code flow",
+        "dual-trust SAML ACS"
+      ],
+      "x": 480,
+      "y": 90
+    },
+    {
+      "id": "spa",
+      "label": "FIELDINSIGHT SPA",
+      "lines": [
+        "React public client",
+        "PKCE only",
+        "inspector checklists"
+      ],
+      "x": 480,
+      "y": 270
+    },
+    {
+      "id": "legacy",
+      "label": "TRACELINK SOAP",
+      "lines": [
+        "CoreWCF service",
+        "SAML or JWT tokens",
+        "raw ADO.NET + procs"
+      ],
+      "x": 480,
+      "y": 470
+    },
+    {
+      "id": "bridge",
+      "label": "REST BRIDGE",
+      "lines": [
+        "/api/cases JSON",
+        "translates to SOAP",
+        "carries delegation token"
+      ],
+      "x": 480,
+      "y": 610,
+      "pulse": true
+    },
+    {
+      "id": "sql",
+      "label": "SQL SERVER",
+      "lines": [
+        "perm + trace + idn schemas",
+        "transition-guarding procs",
+        "migration state + audit"
+      ],
+      "x": 880,
+      "y": 380
+    },
+    {
+      "id": "ops",
+      "label": "OPS TOOL (VB)",
+      "lines": [
+        "metadata checks",
+        "token decode + validate",
+        "scim dump"
+      ],
+      "x": 880,
+      "y": 610
+    },
+    {
+      "id": "tests",
+      "label": "API REGRESSION",
+      "lines": [
+        "Postman + SoapUI + JMeter",
+        "same contracts, every mode"
+      ],
+      "x": 880,
+      "y": 100
+    }
+  ],
+  "edges": [
+    {
+      "from": "adfs",
+      "to": "portal",
+      "label": "SAML",
+      "color": "sky",
+      "path": "M300,155 C355,175 400,140 480,100"
+    },
+    {
+      "from": "adfs",
+      "to": "legacy",
+      "label": "signed assertions",
+      "color": "sky",
+      "path": "M300,180 C400,300 430,450 480,480"
+    },
+    {
+      "from": "okta",
+      "to": "portal",
+      "label": "OIDC code",
+      "color": "sky",
+      "path": "M300,430 C380,330 420,140 480,100"
+    },
+    {
+      "from": "okta",
+      "to": "spa",
+      "label": "code + PKCE",
+      "color": "sky",
+      "packet": true
+    },
+    {
+      "from": "okta",
+      "to": "legacy",
+      "label": "JWT + JWKS",
+      "color": "sky",
+      "path": "M300,455 C400,530 430,505 480,492"
+    },
+    {
+      "from": "portal",
+      "to": "bridge",
+      "label": "JSON calls",
+      "color": "emerald",
+      "path": "M500,175 C390,350 410,530 480,600"
+    },
+    {
+      "from": "bridge",
+      "to": "legacy",
+      "label": "SOAP + cor:Security",
+      "color": "emerald"
+    },
+    {
+      "from": "spa",
+      "to": "bridge",
+      "label": "assignments API",
+      "color": "emerald",
+      "path": "M645,325 C770,420 705,565 560,612"
+    },
+    {
+      "from": "legacy",
+      "to": "sql",
+      "label": "ADO.NET procs",
+      "color": "amber",
+      "packet": true
+    },
+    {
+      "from": "portal",
+      "to": "sql",
+      "label": "permits + state",
+      "color": "amber",
+      "path": "M610,140 C760,200 820,300 880,360"
+    },
+    {
+      "from": "ops",
+      "to": "okta",
+      "label": "jwks + discovery",
+      "color": "rose",
+      "direction": "backward",
+      "path": "M870,600 C700,560 400,520 250,470"
+    },
+    {
+      "from": "tests",
+      "to": "portal",
+      "label": "every endpoint",
+      "color": "rose",
+      "direction": "backward",
+      "path": "M870,135 C730,165 620,150 560,115"
+    }
+  ]
+}

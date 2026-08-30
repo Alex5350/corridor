@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="620" viewBox="0 0 1300 620" role="img" aria-label="The cutover: dual trust, per application - each app crosses from ADFS to Okta through a window where it accepts tokens from both · sky = ADFS trust · emerald = Okta trust · amber = shared state. Animated flows: colored dashes move along request paths; node borders breathe.">
+  <title>The cutover: dual trust, per application</title>
+  <defs>
+    <pattern id="fi-dark-dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#1B2737"/>
+    </pattern>
+  </defs>
+  <style>
+    .fi-dark-node { fill: #0E1620; stroke: #22304A; stroke-width: 1.2; }
+    .fi-dark-edge { stroke: #1F2B3D; stroke-width: 1.5; fill: none; }
+    .fi-dark-pulse { animation: fi-dark-pulse 3s ease-in-out infinite; }
+    .fi-dark-flow-sky { stroke: #38BDF8; stroke-width: 2; fill: none; stroke-dasharray: 5 11; animation: fi-dark-dash-sky-f 1.5s linear infinite; }
+    .fi-dark-flow-sky-b { animation-name: fi-dark-dash-sky-b; }
+    .fi-dark-flow-emerald { stroke: #34D399; stroke-width: 2; fill: none; stroke-dasharray: 5 11; animation: fi-dark-dash-emerald-f 1.5s linear infinite; }
+    .fi-dark-flow-emerald-b { animation-name: fi-dark-dash-emerald-b; }
+    .fi-dark-flow-amber { stroke: #F59E0B; stroke-width: 2; fill: none; stroke-dasharray: 5 11; animation: fi-dark-dash-amber-f 1.5s linear infinite; }
+    .fi-dark-flow-amber-b { animation-name: fi-dark-dash-amber-b; }
+    .fi-dark-flow-rose { stroke: #F87171; stroke-width: 2; fill: none; stroke-dasharray: 5 11; animation: fi-dark-dash-rose-f 1.5s linear infinite; }
+    .fi-dark-flow-rose-b { animation-name: fi-dark-dash-rose-b; }
+    .fi-dark-packet { animation: fi-dark-ride 1.5s linear infinite; }
+    @keyframes fi-dark-pulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: .5; } }
+    @keyframes fi-dark-ride { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+    @keyframes fi-dark-dash-sky-f { to { stroke-dashoffset: -16; } }
+    @keyframes fi-dark-dash-sky-b { to { stroke-dashoffset: 16; } }
+    @keyframes fi-dark-dash-emerald-f { to { stroke-dashoffset: -16; } }
+    @keyframes fi-dark-dash-emerald-b { to { stroke-dashoffset: 16; } }
+    @keyframes fi-dark-dash-amber-f { to { stroke-dashoffset: -16; } }
+    @keyframes fi-dark-dash-amber-b { to { stroke-dashoffset: 16; } }
+    @keyframes fi-dark-dash-rose-f { to { stroke-dashoffset: -16; } }
+    @keyframes fi-dark-dash-rose-b { to { stroke-dashoffset: 16; } }
+    @media (prefers-reduced-motion: reduce) { .fi-dark-flow-sky, .fi-dark-flow-emerald, .fi-dark-flow-amber, .fi-dark-flow-rose { animation: none; } .fi-dark-pulse, .fi-dark-packet { animation: none; } }
+  </style>
+  <rect width="1300" height="620" fill="#0B1118" style="fill:#0B1118 !important"/>
+  <rect width="1300" height="620" fill="url(#fi-dark-dots)" opacity=".5" style="fill:url(#fi-dark-dots) !important"/>
+  <text x="40" y="46" style="font: 600 20px ui-sans-serif, system-ui, sans-serif !important; fill: #E2E8F0 !important" fill="#E2E8F0">The cutover: dual trust, per application</text>
+  <text x="40" y="68" style="font: 12px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #64748B !important" fill="#64748B">each app crosses from ADFS to Okta through a window where it accepts tokens from both · sky = ADFS trust · emerald = Okta trust · amber = shared state</text>
+  <rect x="1060" y="30" width="200" height="26" rx="13" fill="none" stroke="#38BDF8" stroke-opacity=".5" style="fill: none !important; stroke: #38BDF8 !important; stroke-opacity: .5 !important"/>
+  <text x="1160" y="47" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #38BDF8 !important" fill="#38BDF8">no downtime window</text>
+  <path class="fi-dark-edge" d="M280,260 C350,200 400,150 470,130" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-sky" d="M280,260 C350,200 400,150 470,130" fill="none" stroke="#38BDF8" stroke-width="2" style="stroke: #38BDF8 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="375" y="187" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #38BDF8 !important" fill="#38BDF8">start here</text>
+  <path class="fi-dark-edge" d="M573,240 V300" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-amber" d="M573,240 V300" fill="none" stroke="#F59E0B" stroke-width="2" style="stroke: #F59E0B !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="437" y="232" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #F59E0B !important" fill="#F59E0B">flip</text>
+  <path class="fi-dark-edge" d="M566,420 V480" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-emerald" d="M566,420 V480" fill="none" stroke="#34D399" stroke-width="2" style="stroke: #34D399 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="523" y="412" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #34D399 !important" fill="#34D399">flip, verified</text>
+  <path class="fi-dark-edge" d="M470,200 C420,210 420,230 470,240" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-sky fi-dark-flow-sky-b fi-dark-flow-emerald-b fi-dark-flow-amber-b fi-dark-flow-rose-b" d="M470,200 C420,210 420,230 470,240" fill="none" stroke="#38BDF8" stroke-width="2" style="stroke: #38BDF8 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="445" y="212" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #38BDF8 !important" fill="#38BDF8">rollback if anything regresses</text>
+  <path class="fi-dark-edge" d="M670,356 H900" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-amber fi-dark-flow-sky-b fi-dark-flow-emerald-b fi-dark-flow-amber-b fi-dark-flow-rose-b" d="M670,356 H900" fill="none" stroke="#F59E0B" stroke-width="2" style="stroke: #F59E0B !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="785" y="348" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #F59E0B !important" fill="#F59E0B">live mode row</text>
+  <path class="fi-dark-edge" d="M1010,402 V480" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-amber" d="M1010,402 V480" fill="none" stroke="#F59E0B" stroke-width="2" style="stroke: #F59E0B !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="745" y="394" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #F59E0B !important" fill="#F59E0B">audit trail</text>
+  <path class="fi-dark-edge" d="M900,450 C800,420 700,460 670,478" fill="none" stroke="#1F2B3D" stroke-width="1.5" style="stroke: #1F2B3D !important; fill: none !important; stroke-width: 1.5 !important"/>
+  <path class="fi-dark-flow-rose fi-dark-flow-sky-b fi-dark-flow-emerald-b fi-dark-flow-amber-b fi-dark-flow-rose-b" d="M900,450 C800,420 700,460 670,478" fill="none" stroke="#F87171" stroke-width="2" style="stroke: #F87171 !important; fill: none !important; stroke-width: 2 !important; stroke-dasharray: 5 11 !important"/>
+  <text x="785" y="441" text-anchor="middle" style="font: 10px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #F87171 !important" fill="#F87171">green gate</text>
+  <rect class="fi-dark-node fi-dark-pulse" x="80" y="300" width="228" height="102" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="100" y="326" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">THE THREE APPS</text>
+  <text x="100" y="348" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">portal · spa · legacy SOAP</text>
+  <text x="100" y="366" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">same code, three modes</text>
+  <rect class="fi-dark-node" x="470" y="120" width="213" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="490" y="146" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">1: ADFS ONLY</text>
+  <text x="490" y="168" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">TrustMode = Adfs</text>
+  <text x="490" y="186" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">SAML everywhere</text>
+  <text x="490" y="204" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">baseline regression pass</text>
+  <rect class="fi-dark-node" x="470" y="300" width="200" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="490" y="326" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">2: DUAL TRUST</text>
+  <text x="490" y="348" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">TrustMode = Dual</text>
+  <text x="490" y="366" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">SAML or JWT accepted</text>
+  <text x="490" y="384" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">both providers verified live</text>
+  <rect class="fi-dark-node" x="470" y="480" width="184" height="120" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="490" y="506" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">3: OKTA ONLY</text>
+  <text x="490" y="528" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">TrustMode = Okta</text>
+  <text x="490" y="546" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">OIDC + JWT only</text>
+  <text x="490" y="564" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">rollback = flip back</text>
+  <rect class="fi-dark-node" x="900" y="300" width="220" height="102" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="920" y="326" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">SHARED STATE</text>
+  <text x="920" y="348" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">idn.MigrationApps</text>
+  <text x="920" y="366" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">audit events row per flip</text>
+  <rect class="fi-dark-node fi-dark-pulse" x="900" y="480" width="220" height="102" rx="10" fill="#0E1620" stroke="#22304A" style="fill: #0E1620 !important; stroke: #22304A !important; stroke-width: 1.2 !important"/>
+  <text x="920" y="506" style="font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; letter-spacing: .5px !important; fill: #E2E8F0 !important" fill="#E2E8F0">REGRESSION GATE</text>
+  <text x="920" y="528" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">Postman + SoapUI + JMeter</text>
+  <text x="920" y="546" style="font: 11px ui-monospace, SFMono-Regular, Menlo, monospace !important; fill: #94A3B8 !important" fill="#94A3B8">run between every phase</text>
+</svg>
