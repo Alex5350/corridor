@@ -1,6 +1,13 @@
-@Corridor.Legacy_HostAddress = http://localhost:5267
+@Corridor.Legacy_HostAddress = http://localhost:8000
 
-GET {{Corridor.Legacy_HostAddress}}/weatherforecast/
+### Anonymous health endpoint.
+
+GET {{Corridor.Legacy_HostAddress}}/healthz
 Accept: application/json
+
+### Service WSDL (SoapUI and the portal client import this).
+
+GET {{Corridor.Legacy_HostAddress}}/TraceLink.svc?wsdl
+Accept: text/xml
 
 ###
