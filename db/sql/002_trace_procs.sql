@@ -97,7 +97,7 @@ BEGIN
        SET Status = @NewStatus,
            Disposition = CASE WHEN @NewStatus IN (N'Closed', N'Rejected')
                               THEN N'Set by ' + @Actor + N' at ' +
-                                   FORMAT(SYSUTCDATETIME(), 'yyyy-MM-dd HH:mm:ss')
+                                   CONVERT(NVARCHAR(19), SYSUTCDATETIME(), 120)
                               ELSE Disposition END
      WHERE CaseNumber = @CaseNumber;
     SET @RowsAffected = @@ROWCOUNT;
