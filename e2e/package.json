@@ -1,0 +1,16 @@
+{
+  "name": "corridor-e2e",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Self-bootstrapping Playwright end-to-end suite for the Corridor stack.",
+  "scripts": {
+    "test": "playwright test",
+    "screenshots": "node scripts/capture-screenshots.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "mssql": "^11.0.1",
+    "playwright": "^1.50.0"
+  }
+}
