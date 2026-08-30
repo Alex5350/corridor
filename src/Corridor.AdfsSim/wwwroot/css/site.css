@@ -1,31 +1,183 @@
-html {
-  font-size: 14px;
-}
+/* adfs-sim login pages: plain federal styling. System fonts, no external CDN. */
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+* {
+  box-sizing: border-box;
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+  font-size: 16px;
 }
 
 body {
-  margin-bottom: 60px;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color: #1b1b1b;
+  background: #f0f0f0;
+  line-height: 1.5;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+.wrap {
+  width: 100%;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+/* Blue federation header bar */
+.top-bar {
+  background: #1a4480;
+  color: #ffffff;
+  border-bottom: 4px solid #162e51;
+}
+
+.top-bar .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.farm-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.farm-note {
+  font-size: 0.85rem;
+  color: #d9e8f6;
+}
+
+main.wrap {
+  flex: 1 0 auto;
+  padding-top: 2rem;
+  padding-bottom: 2.5rem;
+}
+
+/* Sign-in card */
+.login-panel {
+  max-width: 26rem;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #a9aeb1;
+  border-top: 6px solid #1a4480;
+  padding: 1.75rem 2rem 1.5rem;
+}
+
+.login-panel h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  color: #1b1b1b;
+}
+
+.intro {
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  color: #565c65;
+  font-size: 0.95rem;
+}
+
+.alert {
+  border: 1px solid #b50909;
+  border-left-width: 6px;
+  background: #f6e2e2;
+  color: #5c1111;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.92rem;
+}
+
+.login-form label {
+  display: block;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #1b1b1b;
+  border: 1px solid #565c65;
+  border-radius: 0;
+  background: #ffffff;
+}
+
+.login-form input:focus {
+  outline: 3px solid #2491ff;
+  outline-offset: 0;
+  border-color: #1a4480;
+}
+
+.btn-signin {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 600;
+  color: #ffffff;
+  background: #005ea2;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.btn-signin:hover {
+  background: #1a4480;
+}
+
+.btn-signin:focus {
+  outline: 3px solid #2491ff;
+  outline-offset: 0;
+}
+
+/* Demo account reference */
+.demo-accounts {
+  margin-top: 1.75rem;
+  border-top: 1px solid #dfe1e2;
+  padding-top: 0.9rem;
+  font-size: 0.85rem;
+  color: #565c65;
+}
+
+.demo-accounts summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #1a4480;
+}
+
+.demo-accounts ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.demo-accounts code {
+  font-family: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  background: #f0f0f0;
+  padding: 0 0.2rem;
+}
+
+/* Footer */
+.footer {
+  flex-shrink: 0;
+  background: #dfe1e2;
+  color: #565c65;
+  font-size: 0.82rem;
+  border-top: 1px solid #a9aeb1;
+}
+
+.footer p {
+  margin: 0.6rem 0;
 }

@@ -1,0 +1,36 @@
+@model Corridor.AdfsSim.Pages.LoginViewModel
+
+<section class="login-panel" aria-labelledby="signin-heading">
+    <h1 id="signin-heading">Sign in</h1>
+    <p class="intro">Use your Corridor directory account.</p>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert" role="alert">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" action="/adfs/ls" class="login-form">
+        <input type="hidden" name="SAMLRequest" value="@Model.SamlRequest" />
+        <input type="hidden" name="RelayState" value="@Model.RelayState" />
+
+        <label for="login-user">User name</label>
+        <input id="login-user" name="UserName" type="text" autocomplete="username"
+               value="@Model.UserName" autocapitalize="none" spellcheck="false" required />
+
+        <label for="login-password">Password</label>
+        <input id="login-password" name="Password" type="password" autocomplete="current-password" required />
+
+        <button type="submit" class="btn-signin">Sign in</button>
+    </form>
+
+    <details class="demo-accounts">
+        <summary>Demo accounts</summary>
+        <p>Shared demo password: <code>Demo1234!</code> (documented demo-only; see db/sql/seed).</p>
+        <ul>
+            <li><code>admin@corridor.example</code> - Admin</li>
+            <li><code>inspector@corridor.example</code> - Inspector</li>
+            <li><code>officer@corridor.example</code> - Officer</li>
+            <li><code>clerk@corridor.example</code> - Clerk</li>
+        </ul>
+    </details>
+</section>
