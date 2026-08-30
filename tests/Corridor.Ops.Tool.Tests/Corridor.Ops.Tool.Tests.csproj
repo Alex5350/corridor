@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -16,6 +16,12 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- C# tests against the VB public surface: proves cross-language
+       consumption of the tool's modules as well as the behavior. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corridor.Ops.Tool\Corridor.Ops.Tool.vbproj" />
   </ItemGroup>
 
 </Project>
