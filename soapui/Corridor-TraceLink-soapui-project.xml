@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="6ad75aa020f94aeebd9a" activeEnvironment="Default" name="Corridor TraceLink" resourceRoot="${projectDir}" soapui-version="5.6.0" abortOnError="false" runType="SEQUENTIAL" xmlns:con="http://eviware.com/soapui/config">
+  <con:description>TraceLink (the Corridor legacy SOAP case service) exercised over its real contract: four operations on http://localhost:8000/TraceLink.svc, namespace http://corridor.example/tracelink/2026/08. Every call carries the simplified WS-Security header, a cor:Security element in http://corridor.example/security wrapping either an unprefixed jwt element (okta-sim token) or a saml:Assertion. Requires the legacy app in Dual or Okta trust mode for JWT calls; flip it on the portal Admin > Migration dashboard or with SQL. Synthetic demo data only.</con:description>
+  <con:settings>
+    <con:setting id="com.eviware.soapui.impl.wsdl.panels.request.MockMvcProgressiveStepsPanel@hermeline-buffer">false</con:setting>
+    <con:setting id="WsdlSettings@soap-version">1.1</con:setting>
+  </con:settings>
+  <con:interface xsi:type="con:WsdlInterface" id="fc7fe65ca1c24d1e9894" defined="true" isGenerated="true" name="TraceLinkServiceSoap" type="wsdl" wsaVersion="NONE" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:settings/>
+    <con:definitionCache/>
+    <con:endpoints>
+      <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+    </con:endpoints>
+    <con:operation id="3145fcf5f6854ae88ec8" name="SearchCases" bindingOperationName="SearchCases" action="http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases" inputName="" isOneWay="false" receivesAttachments="false" sendsAttachments="false" anonymous="optional">
+      <con:settings/>
+      <con:call name="SearchCases Request 1" id="e293cca56a014e2fbc07">
+        <con:settings/>
+        <con:encoding>UTF-8</con:encoding>
+        <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+        <con:request>&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Header&gt;
+    &lt;cor:Security xmlns:cor="http://corridor.example/security"&gt;
+      &lt;jwt&gt;PASTE-SERVICE-JWT-OR-RUN-THE-IDENTITY-MODES-SUITE&lt;/jwt&gt;
+    &lt;/cor:Security&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;SearchCases xmlns="http://corridor.example/tracelink/2026/08"&gt;&lt;requester&gt;soapui@corridor.example&lt;/requester&gt;&lt;statusFilter&gt;Received&lt;/statusFilter&gt;&lt;maxRows&gt;20&lt;/maxRows&gt;&lt;/SearchCases&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</con:request>
+        <con:credentials><con:authType>No Authorization</con:authType></con:credentials>
+        <con:jmsConfig/>
+        <con:jmsPropertyConfig/>
+        <con:wsaConfig action="http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases" mustUnderstand="NONE" version="200508"/>
+        <con:wsrmConfig version="1.2"/>
+      </con:call>
+    </con:operation>
+    <con:operation id="d13a63cf001f4d429c71" name="GetCase" bindingOperationName="GetCase" action="http://corridor.example/tracelink/2026/08/TraceLinkService/GetCase" inputName="" isOneWay="false" receivesAttachments="false" sendsAttachments="false" anonymous="optional">
+      <con:settings/>
+      <con:call name="GetCase Request 1" id="82b8bbc6d4ab48fda084">
+        <con:settings/>
+        <con:encoding>UTF-8</con:encoding>
+        <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+        <con:request>&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Header&gt;
+    &lt;cor:Security xmlns:cor="http://corridor.example/security"&gt;
+      &lt;jwt&gt;PASTE-SERVICE-JWT-OR-RUN-THE-IDENTITY-MODES-SUITE&lt;/jwt&gt;
+    &lt;/cor:Security&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;GetCase xmlns="http://corridor.example/tracelink/2026/08"&gt;&lt;caseNumber&gt;TRC-100104&lt;/caseNumber&gt;&lt;/GetCase&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</con:request>
+        <con:credentials><con:authType>No Authorization</con:authType></con:credentials>
+        <con:jmsConfig/>
+        <con:jmsPropertyConfig/>
+        <con:wsaConfig action="http://corridor.example/tracelink/2026/08/TraceLinkService/GetCase" mustUnderstand="NONE" version="200508"/>
+        <con:wsrmConfig version="1.2"/>
+      </con:call>
+    </con:operation>
+    <con:operation id="e643e471395248eb97d2" name="CreateTraceRequest" bindingOperationName="CreateTraceRequest" action="http://corridor.example/tracelink/2026/08/TraceLinkService/CreateTraceRequest" inputName="" isOneWay="false" receivesAttachments="false" sendsAttachments="false" anonymous="optional">
+      <con:settings/>
+      <con:call name="CreateTraceRequest Request 1" id="6eda865f07d141edb4d9">
+        <con:settings/>
+        <con:encoding>UTF-8</con:encoding>
+        <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+        <con:request>&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Header&gt;
+    &lt;cor:Security xmlns:cor="http://corridor.example/security"&gt;
+      &lt;jwt&gt;PASTE-SERVICE-JWT-OR-RUN-THE-IDENTITY-MODES-SUITE&lt;/jwt&gt;
+    &lt;/cor:Security&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;CreateTraceRequest xmlns="http://corridor.example/tracelink/2026/08"&gt;&lt;request&gt;&lt;ItemDescription&gt;Merrin M-12 shotgun 12ga&lt;/ItemDescription&gt;&lt;LicenseeName&gt;SoapUI Sporting Goods&lt;/LicenseeName&gt;&lt;RequesterUpn&gt;soapui@corridor.example&lt;/RequesterUpn&gt;&lt;Serial&gt;SUI-771204&lt;/Serial&gt;&lt;/request&gt;&lt;/CreateTraceRequest&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</con:request>
+        <con:credentials><con:authType>No Authorization</con:authType></con:credentials>
+        <con:jmsConfig/>
+        <con:jmsPropertyConfig/>
+        <con:wsaConfig action="http://corridor.example/tracelink/2026/08/TraceLinkService/CreateTraceRequest" mustUnderstand="NONE" version="200508"/>
+        <con:wsrmConfig version="1.2"/>
+      </con:call>
+    </con:operation>
+    <con:operation id="f0e4c6e5e8c94427b475" name="UpdateStatus" bindingOperationName="UpdateStatus" action="http://corridor.example/tracelink/2026/08/TraceLinkService/UpdateStatus" inputName="" isOneWay="false" receivesAttachments="false" sendsAttachments="false" anonymous="optional">
+      <con:settings/>
+      <con:call name="UpdateStatus Request 1" id="1ff53038185c4a2498dd">
+        <con:settings/>
+        <con:encoding>UTF-8</con:encoding>
+        <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+        <con:request>&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Header&gt;
+    &lt;cor:Security xmlns:cor="http://corridor.example/security"&gt;
+      &lt;jwt&gt;PASTE-SERVICE-JWT-OR-RUN-THE-IDENTITY-MODES-SUITE&lt;/jwt&gt;
+    &lt;/cor:Security&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;UpdateStatus xmlns="http://corridor.example/tracelink/2026/08"&gt;&lt;caseNumber&gt;TRC-100101&lt;/caseNumber&gt;&lt;newStatus&gt;UnderReview&lt;/newStatus&gt;&lt;actor&gt;soapui@corridor.example&lt;/actor&gt;&lt;/UpdateStatus&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</con:request>
+        <con:credentials><con:authType>No Authorization</con:authType></con:credentials>
+        <con:jmsConfig/>
+        <con:jmsPropertyConfig/>
+        <con:wsaConfig action="http://corridor.example/tracelink/2026/08/TraceLinkService/UpdateStatus" mustUnderstand="NONE" version="200508"/>
+        <con:wsrmConfig version="1.2"/>
+      </con:call>
+    </con:operation>
+  </con:interface>
+  <con:testSuite id="1911313bd5104058bb0e" name="Regression">
+    <con:description>Happy path over all four TraceLink operations with a service JWT. UpdateStatus consumes the case number minted by the CreateTraceRequest step through property expansion, so the suite is re-runnable.</con:description>
+    <con:settings/>
+    <con:surrogateChars>?</con:surrogateChars>
+    <con:runType>SEQUENTIAL</con:runType>
+    <con:testCase id="cf72765e742444ce9af7" keepService="true" name="Four operations happy path" searchProperties="true">
+      <con:description>Replace SERVICE-JWT-PLACEHOLDER with a real token (run the Identity modes suite first or mint one from okta-sim), then run.</con:description>
+      <con:settings/>
+      <con:testStep type="properties" name="Properties" id="79870bc6bba647f1a0bd">
+        <con:settings/>
+        <con:config xsi:type="con:PropertiesStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:properties>
+            <con:property><con:name>serviceJwt</con:name><con:value>SERVICE-JWT-PLACEHOLDER</con:value></con:property>
+          </con:properties>
+        </con:config>
+      </con:testStep>
+      <con:testStep type="request" name="SearchCases" id="3551aec783cd4f10918a">
+        <con:settings/>
+        <con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:interface>TraceLinkServiceSoap</con:interface>
+          <con:operation>SearchCases</con:operation>
+        <con:request name="SearchCases" id="a01f57380a3547d094f2" wssPasswordType="">
+          <con:settings>
+          </con:settings>
+          <con:encoding>UTF-8</con:encoding>
+          <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+          <con:request>&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Header&gt;
+    &lt;cor:Security xmlns:cor="http://corridor.example/security"&gt;
+      &lt;jwt&gt;SERVICE-JWT-PLACEHOLDER&lt;/jwt&gt;
+    &lt;/cor:Security&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;SearchCases xmlns="http://corridor.example/tracelink/2026/08"&gt;&lt;requester&gt;soapui@corridor.example&lt;/requester&gt;&lt;statusFilter&gt;Received&lt;/statusFilter&gt;&lt;maxRows&gt;20&lt;/maxRows&gt;&lt;/SearchCases&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</con:request>
+          <con:assertions xsi:type="con:SoapResponseAssertion" name="SOAP Response" id="708d63bda6294d67b2af"/>
+          <con:assertions xsi:type="con:SoapFaultAssertion" name="Not SOAP Fault" id="64c1784c70324e61abaa"/>
+          <con:assertions xsi:type="con:SimpleContainsAssertion" name="Contains TRC-" id="1fd64a260d724ff3a6a2">
+  <con:configuration><text>TRC-</text></con:configuration>
+</con:assertions>
+          <con:assertions xsi:type="con:XPathContentAssertion" name="A received case is present" id="d8d3f3047ffe43aa9d91">
+  <con:configuration><path>declare namespace cor='http://corridor.example/tracelink/2026/08';exists(//cor:TraceCase[cor:Status='Received'])</path><content>true</content><allowWildcards>false</allowWildcards></con:configuration>
+</con:assertions>
+          <con:credentials><con:authType>No Authorization</con:authType></con:credentials>
+          <con:jmsConfig/>
+          <con:jmsPropertyConfig/>
+          <con:wsaConfig action="http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases" mustUnderstand="NONE" version="200508"/>
+          <con:wsrmConfig version="1.2"/>
+        </con:request>
+        </con:config>
+      </con:testStep>
+      <con:testStep type="request" name="GetCase" id="d578f0b93bb54b7fa950">
+        <con:settings/>
+        <con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:interface>TraceLinkServiceSoap</con:interface>
+          <con:operation>GetCase</con:operation>
+        <con:request name="GetCase" id="5102db2e6d104f66a076" wssPasswordType="">
+          <con:settings>
+          </con:settings>
+          <con:encoding>UTF-8</con:encoding>
+          <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+          <con:request>&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Header&gt;
+    &lt;cor:Security xmlns:cor="http://corridor.example/security"&gt;
+      &lt;jwt&gt;SERVICE-JWT-PLACEHOLDER&lt;/jwt&gt;
+    &lt;/cor:Security&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;GetCase xmlns="http://corridor.example/tracelink/2026/08"&gt;&lt;caseNumber&gt;TRC-100104&lt;/caseNumber&gt;&lt;/GetCase&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</con:request>
+          <con:assertions xsi:type="con:SoapResponseAssertion" name="SOAP Response" id="68dad54a7e17412bb591"/>
+          <con:assertions xsi:type="con:SoapFaultAssertion" name="Not SOAP Fault" id="5a21d6345a564ff2a818"/>
+          <con:assertions xsi:type="con:XPathContentAssertion" name="Seeded case is Closed" id="daacd775df5149008bf6">
+  <con:configuration><path>declare namespace cor='http://corridor.example/tracelink/2026/08';//cor:GetCaseResponse/cor:GetCaseResult/cor:Status</path><content>Closed</content><allowWildcards>false</allowWildcards></con:configuration>
+</con:assertions>
+          <con:credentials><con:authType>No Authorization</con:authType></con:credentials>
+          <con:jmsConfig/>
+          <con:jmsPropertyConfig/>
+          <con:wsaConfig action="http://corridor.example/tracelink/2026/08/TraceLinkService/GetCase" mustUnderstand="NONE" version="200508"/>
+          <con:wsrmConfig version="1.2"/>
+        </con:request>
+        </con:config>
+      </con:testStep>
+      <con:testStep type="request" name="CreateTraceRequest" id="4619b3a531174e279d8e">
+        <con:settings/>
+        <con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:interface>TraceLinkServiceSoap</con:interface>
+          <con:operation>CreateTraceRequest</con:operation>
+        <con:request name="CreateTraceRequest" id="987b45d0bb97423fab0d" wssPasswordType="">
+          <con:settings>
+          </con:settings>
+          <con:encoding>UTF-8</con:encoding>
+          <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+          <con:request>&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Header&gt;
+    &lt;cor:Security xmlns:cor="http://corridor.example/security"&gt;
+      &lt;jwt&gt;SERVICE-JWT-PLACEHOLDER&lt;/jwt&gt;
+    &lt;/cor:Security&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;CreateTraceRequest xmlns="http://corridor.example/tracelink/2026/08"&gt;&lt;request&gt;&lt;ItemDescription&gt;Merrin M-12 shotgun 12ga&lt;/ItemDescription&gt;&lt;LicenseeName&gt;SoapUI Sporting Goods&lt;/LicenseeName&gt;&lt;RequesterUpn&gt;soapui@corridor.example&lt;/RequesterUpn&gt;&lt;Serial&gt;SUI-771204&lt;/Serial&gt;&lt;/request&gt;&lt;/CreateTraceRequest&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</con:request>
+          <con:assertions xsi:type="con:SoapResponseAssertion" name="SOAP Response" id="a1ca576d94bd4c6d999b"/>
+          <con:assertions xsi:type="con:SoapFaultAssertion" name="Not SOAP Fault" id="08e2cabc5de14b29ae0c"/>
+          <con:assertions xsi:type="con:SimpleContainsAssertion" name="Case number allocated" id="c9c16115d3924c51be69">
+  <con:configuration><text>TRC-</text></con:configuration>
+</con:assertions>
+          <con:credentials><con:authType>No Authorization</con:authType></con:credentials>
+          <con:jmsConfig/>
+          <con:jmsPropertyConfig/>
+          <con:wsaConfig action="http://corridor.example/tracelink/2026/08/TraceLinkService/CreateTraceRequest" mustUnderstand="NONE" version="200508"/>
+          <con:wsrmConfig version="1.2"/>
+        </con:request>
+        </con:config>
+      </con:testStep>
+      <con:testStep type="request" name="UpdateStatus" id="ee4d4dd4aa854218946a">
+        <con:settings/>
+        <con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:interface>TraceLinkServiceSoap</con:interface>
+          <con:operation>UpdateStatus</con:operation>
+        <con:request name="UpdateStatus" id="effb8a280c3d4dffab85" wssPasswordType="">
+          <con:settings>
+          </con:settings>
+          <con:encoding>UTF-8</con:encoding>
+          <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+          <con:request>&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Header&gt;
+    &lt;cor:Security xmlns:cor="http://corridor.example/security"&gt;
+      &lt;jwt&gt;SERVICE-JWT-PLACEHOLDER&lt;/jwt&gt;
+    &lt;/cor:Security&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;UpdateStatus xmlns="http://corridor.example/tracelink/2026/08"&gt;&lt;caseNumber&gt;${CreateTraceRequest#Response#declare namespace cor='http://corridor.example/tracelink/2026/08';string(//cor:CreateTraceRequestResult)}&lt;/caseNumber&gt;&lt;newStatus&gt;UnderReview&lt;/newStatus&gt;&lt;actor&gt;soapui@corridor.example&lt;/actor&gt;&lt;/UpdateStatus&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</con:request>
+          <con:assertions xsi:type="con:SoapResponseAssertion" name="SOAP Response" id="b34d5274a2a84f09bc6a"/>
+          <con:assertions xsi:type="con:SoapFaultAssertion" name="Not SOAP Fault" id="0b526c7b6a7c473eb190"/>
+          <con:assertions xsi:type="con:XPathContentAssertion" name="Legal transition accepted" id="9a35798d253e4bf49767">
+  <con:configuration><path>declare namespace cor='http://corridor.example/tracelink/2026/08';//cor:UpdateStatusResponse/cor:UpdateStatusResult</path><content>true</content><allowWildcards>false</allowWildcards></con:configuration>
+</con:assertions>
+          <con:credentials><con:authType>No Authorization</con:authType></con:credentials>
+          <con:jmsConfig/>
+          <con:jmsPropertyConfig/>
+          <con:wsaConfig action="http://corridor.example/tracelink/2026/08/TraceLinkService/UpdateStatus" mustUnderstand="NONE" version="200508"/>
+          <con:wsrmConfig version="1.2"/>
+        </con:request>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+    <con:properties/>
+  </con:testSuite>
+  <con:testSuite id="2ff4ab24d40c4a559947" name="Identity modes">
+    <con:description>The dual-trust story on the wire: a Groovy step mints the okta-sim service JWT for the legacy client, the first call carries it in cor:Security and succeeds, and the deliberate bad-token call must come back as a cor:InvalidToken SOAP fault (HTTP 500).</con:description>
+    <con:settings/>
+    <con:surrogateChars>?</con:surrogateChars>
+    <con:runType>SEQUENTIAL</con:runType>
+    <con:testCase id="ca78ffa1362b4cad8b8c" keepService="true" name="JWT path and bad token path" searchProperties="true">
+      <con:settings/>
+      <con:testStep type="groovy" name="Fetch service JWT" id="f8d82d0ef6cd4fb8ae34">
+        <con:settings/>
+        <con:config>import groovy.json.JsonSlurper
+
+// Fetch a service JWT from okta-sim with the legacy client credentials and store it
+// on the project so both suites can expand ${#Project#jwt} inside cor:Security.
+def connection = new URL('http://localhost:8080/token').openConnection()
+def basic = 'legacy:corridor-legacy-secret'.getBytes('UTF-8').encodeBase64().toString()
+connection.setRequestProperty('Authorization', 'Basic ' + basic)
+connection.setRequestProperty('Content-Type', 'application/x-www-form-urlencoded')
+connection.setRequestMethod('POST')
+connection.setDoOutput(true)
+connection.getOutputStream().write('grant_type=client_credentials'.getBytes('UTF-8'))
+def payload = connection.getInputStream().getText()
+def token = new JsonSlurper().parseText(payload).access_token
+assert token : 'okta-sim returned no access token for the legacy client'
+testRunner.testCase.testSuite.project.setPropertyValue('jwt', token)
+log.info 'Stored a fresh service JWT (kid rotates, so fetch it per run)' </con:config>
+      </con:testStep>
+      <con:testStep type="request" name="SearchCases with JWT header" id="a948910561704cb39eed">
+        <con:settings/>
+        <con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:interface>TraceLinkServiceSoap</con:interface>
+          <con:operation>SearchCases</con:operation>
+        <con:request name="SearchCases" id="e6e3b58010a3408392b2" wssPasswordType="">
+          <con:settings>
+          </con:settings>
+          <con:encoding>UTF-8</con:encoding>
+          <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+          <con:request>&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Header&gt;
+    &lt;cor:Security xmlns:cor="http://corridor.example/security"&gt;
+      &lt;jwt&gt;${#Project#jwt}&lt;/jwt&gt;
+    &lt;/cor:Security&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;SearchCases xmlns="http://corridor.example/tracelink/2026/08"&gt;&lt;requester&gt;soapui@corridor.example&lt;/requester&gt;&lt;statusFilter&gt;Received&lt;/statusFilter&gt;&lt;maxRows&gt;20&lt;/maxRows&gt;&lt;/SearchCases&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</con:request>
+          <con:assertions xsi:type="con:SoapResponseAssertion" name="SOAP Response" id="730fd253403c4eb3baf4"/>
+          <con:assertions xsi:type="con:SoapFaultAssertion" name="Not SOAP Fault" id="84e1734056974a27a5f0"/>
+          <con:assertions xsi:type="con:SimpleContainsAssertion" name="Contains TRC-" id="467dfdd454094e03ab57">
+  <con:configuration><text>TRC-</text></con:configuration>
+</con:assertions>
+          <con:credentials><con:authType>No Authorization</con:authType></con:credentials>
+          <con:jmsConfig/>
+          <con:jmsPropertyConfig/>
+          <con:wsaConfig action="http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases" mustUnderstand="NONE" version="200508"/>
+          <con:wsrmConfig version="1.2"/>
+        </con:request>
+        </con:config>
+      </con:testStep>
+      <con:testStep type="request" name="Bad token must fault" id="6cf6173b373642d89c45">
+        <con:settings/>
+        <con:config xsi:type="con:RequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:interface>TraceLinkServiceSoap</con:interface>
+          <con:operation>SearchCases</con:operation>
+        <con:request name="SearchCases" id="d8697a6b79d34ad49995" wssPasswordType="">
+          <con:settings>
+          </con:settings>
+          <con:encoding>UTF-8</con:encoding>
+          <con:endpoint>http://localhost:8000/TraceLink.svc</con:endpoint>
+          <con:request>&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Header&gt;
+    &lt;cor:Security xmlns:cor="http://corridor.example/security"&gt;
+      &lt;jwt&gt;not.a.jwt&lt;/jwt&gt;
+    &lt;/cor:Security&gt;
+  &lt;/soap:Header&gt;
+  &lt;soap:Body&gt;
+    &lt;SearchCases xmlns="http://corridor.example/tracelink/2026/08"&gt;&lt;requester&gt;soapui@corridor.example&lt;/requester&gt;&lt;statusFilter&gt;Received&lt;/statusFilter&gt;&lt;maxRows&gt;20&lt;/maxRows&gt;&lt;/SearchCases&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</con:request>
+          <con:assertions xsi:type="con:ValidHttpStatusCodesAssertion" name="Valid HTTP Status Codes" id="f0ce004f2df44851bb60">
+  <con:configuration><codes>500</codes></con:configuration>
+</con:assertions>
+          <con:assertions xsi:type="con:SimpleContainsAssertion" name="InvalidToken subcode" id="5a156a0de646446a96af">
+  <con:configuration><text>InvalidToken</text></con:configuration>
+</con:assertions>
+          <con:credentials><con:authType>No Authorization</con:authType></con:credentials>
+          <con:jmsConfig/>
+          <con:jmsPropertyConfig/>
+          <con:wsaConfig action="http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases" mustUnderstand="NONE" version="200508"/>
+          <con:wsrmConfig version="1.2"/>
+        </con:request>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+    </con:testCase>
+    <con:properties/>
+  </con:testSuite>
+  <con:properties>
+    <con:property><con:name>jwt</con:name><con:value>fill-me-by-running-the-Identity-modes-suite</con:value></con:property>
+  </con:properties>
+  <con:jdbcConnectionContainer/>
+  <con:wsrmContainer/>
+</con:soapui-project>

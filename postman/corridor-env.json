@@ -1,0 +1,13 @@
+{
+  "name": "Corridor local (localhost)",
+  "values": [
+    { "key": "baseUrl-okta", "value": "http://localhost:8080", "enabled": true },
+    { "key": "baseUrl-portal", "value": "http://localhost:5200", "enabled": true },
+    { "key": "baseUrl-legacy", "value": "http://localhost:8000", "enabled": true },
+    { "key": "baseUrl-adfs", "value": "http://localhost:8090", "enabled": true },
+    { "key": "scimToken", "value": "corridor-scim-token", "enabled": true },
+    { "key": "demoUser", "value": "inspector@corridor.example", "enabled": true },
+    { "key": "demoPassword", "value": "Demo1234!", "enabled": true }
+  ],
+  "_postman_variable_scope": "environment"
+}

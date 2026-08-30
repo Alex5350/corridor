@@ -1,0 +1,1058 @@
+{
+  "info": {
+    "_postman_id": "b7c2f8d1-4a6e-4f2b-9c3d-corridor01",
+    "name": "Corridor",
+    "description": "Corridor ADFS to Okta migration demo: API smoke and flow suite against the local simulation services (okta-sim 8080, portal 5200, legacy TraceLink 8000). Synthetic data only; every secret here is a documented demo constant. Run order inside each folder is numbered; the OIDC folder must run first because it captures {{accessToken}} and {{jwt}} for the other folders.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl-okta", "value": "http://localhost:8080" },
+    { "key": "baseUrl-portal", "value": "http://localhost:5200" },
+    { "key": "baseUrl-legacy", "value": "http://localhost:8000" },
+    { "key": "scimToken", "value": "corridor-scim-token" },
+    { "key": "demoUser", "value": "inspector@corridor.example" },
+    { "key": "demoPassword", "value": "Demo1234!" },
+    { "key": "codeVerifier", "value": "" },
+    { "key": "codeChallenge", "value": "" },
+    { "key": "code", "value": "" },
+    { "key": "accessToken", "value": "" },
+    { "key": "jwt", "value": "" },
+    { "key": "scimUserId", "value": "" },
+    { "key": "scimUserName", "value": "" },
+    { "key": "caseNumber", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "description": "Anonymous healthz on every service, the repo-wide liveness contract.",
+      "item": [
+        {
+          "name": "okta-sim healthz",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status ok payload', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl-okta}}/healthz",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["healthz"]
+            },
+            "description": "okta-sim liveness."
+          },
+          "response": []
+        },
+        {
+          "name": "adfs-sim healthz",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status ok payload', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8090/healthz",
+              "host": ["http://localhost:8090"],
+              "path": ["healthz"]
+            },
+            "description": "adfs-sim liveness."
+          },
+          "response": []
+        },
+        {
+          "name": "legacy TraceLink healthz",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status ok payload', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl-legacy}}/healthz",
+              "host": ["{{baseUrl-legacy}}"],
+              "path": ["healthz"]
+            },
+            "description": "Legacy SOAP service liveness."
+          },
+          "response": []
+        },
+        {
+          "name": "portal healthz",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status ok payload', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl-portal}}/healthz",
+              "host": ["{{baseUrl-portal}}"],
+              "path": ["healthz"]
+            },
+            "description": "PermitPortal liveness."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "OIDC",
+      "description": "The full authorization code flow against okta-sim, scripted end to end: PKCE S256 computed with crypto.subtle, the login form POST that captures the code, the token exchange, a client-credentials service token for the SOAP calls, and userinfo.",
+      "item": [
+        {
+          "name": "0. Compute PKCE S256",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Generate the verifier now; the challenge is derived with the WebCrypto",
+                  "// API (crypto.subtle) because the sandbox exposes it and it keeps the",
+                  "// collection free of crypto libraries.",
+                  "const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';",
+                  "const randomValues = new Uint32Array(64);",
+                  "crypto.getRandomValues(randomValues);",
+                  "let verifier = '';",
+                  "for (let i = 0; i < randomValues.length; i++) {",
+                  "    verifier += chars.charAt(randomValues[i] % chars.length);",
+                  "}",
+                  "pm.collectionVariables.set('codeVerifier', verifier);",
+                  "(async () => {",
+                  "    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));",
+                  "    const bytes = new Uint8Array(digest);",
+                  "    let binary = '';",
+                  "    bytes.forEach((b) => { binary += String.fromCharCode(b); });",
+                  "    const challenge = btoa(binary).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
+                  "    pm.collectionVariables.set('codeChallenge', challenge);",
+                  "})();",
+                  "pm.test('PKCE verifier stored for the next request', () => {",
+                  "    pm.expect(pm.collectionVariables.get('codeVerifier')).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl-okta}}/healthz",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["healthz"]
+            },
+            "description": "Warm-up request whose test script computes and stores the PKCE pair used by request 1 and 2."
+          },
+          "response": []
+        },
+        {
+          "name": "1. Authorize: login form POST captures the code",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('oidcState', 'pm-' + Math.random().toString(36).slice(2, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// okta-sim answers the login POST with a 302 whose Location carries the code.",
+                  "pm.test('login redirected', () => pm.response.to.have.status(302));",
+                  "const location = pm.response.headers.get('Location') || '';",
+                  "pm.test('redirect targets the SPA callback', () => {",
+                  "    pm.expect(location).to.contain('http://localhost:5173/callback');",
+                  "});",
+                  "const params = {};",
+                  "location.split('?')[1].split('&').forEach((pair) => {",
+                  "    const parts = pair.split('=');",
+                  "    params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1] || '');",
+                  "});",
+                  "pm.test('authorization code captured', () => {",
+                  "    pm.expect(params.code).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.test('state round trips', () => {",
+                  "    pm.expect(params.state).to.eql(pm.collectionVariables.get('oidcState'));",
+                  "});",
+                  "pm.collectionVariables.set('code', params.code);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "client_id", "value": "spa", "type": "text" },
+                { "key": "redirect_uri", "value": "http://localhost:5173/callback", "type": "text" },
+                { "key": "response_type", "value": "code", "type": "text" },
+                { "key": "scope", "value": "openid profile email", "type": "text" },
+                { "key": "state", "value": "{{oidcState}}", "type": "text" },
+                { "key": "code_challenge", "value": "{{codeChallenge}}", "type": "text" },
+                { "key": "code_challenge_method", "value": "S256", "type": "text" },
+                { "key": "username", "value": "{{demoUser}}", "type": "text" },
+                { "key": "password", "value": "{{demoPassword}}", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl-okta}}/authorize",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["authorize"]
+            },
+            "description": "Submits the demo credentials straight to the okta-sim authorize endpoint with the PKCE challenge, the same fields the rendered login form would post.",
+            "protocolProfileBehavior": { "followRedirects": false }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Token exchange with PKCE verifier",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('token shape', () => {",
+                  "    pm.expect(body.token_type).to.eql('Bearer');",
+                  "    pm.expect(body.expires_in).to.eql(900);",
+                  "    pm.expect(body.access_token.split('.')).to.have.lengthOf(3);",
+                  "    pm.expect(body.id_token.split('.')).to.have.lengthOf(3);",
+                  "    pm.expect(body.scope).to.contain('openid');",
+                  "});",
+                  "pm.test('id token payload claims', () => {",
+                  "    const payload = JSON.parse(atob(body.id_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));",
+                  "    pm.expect(payload.iss).to.eql('http://localhost:8080');",
+                  "    pm.expect(payload.aud).to.eql('spa');",
+                  "    pm.expect(payload.preferred_username).to.eql(pm.collectionVariables.get('demoUser'));",
+                  "});",
+                  "pm.collectionVariables.set('accessToken', body.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "authorization_code", "type": "text" },
+                { "key": "code", "value": "{{code}}", "type": "text" },
+                { "key": "redirect_uri", "value": "http://localhost:5173/callback", "type": "text" },
+                { "key": "code_verifier", "value": "{{codeVerifier}}", "type": "text" },
+                { "key": "client_id", "value": "spa", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl-okta}}/token",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["token"]
+            },
+            "description": "Public client exchange: no secret, the PKCE verifier proves the same browser session."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Service token via client credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('service token shape', () => {",
+                  "    pm.expect(body.token_type).to.eql('Bearer');",
+                  "    pm.expect(body.scope).to.eql('corridor.service');",
+                  "    pm.expect(body.access_token.split('.')).to.have.lengthOf(3);",
+                  "});",
+                  "pm.collectionVariables.set('jwt', body.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "legacy", "type": "string" },
+                { "key": "password", "value": "corridor-legacy-secret", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "client_credentials", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl-okta}}/token",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["token"]
+            },
+            "description": "The legacy client's service JWT. Stored as {{jwt}} and replayed in the cor:Security header by the SOAP folder. Requires the legacy app in Dual or Okta trust mode."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Userinfo with the access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('userinfo claims', () => {",
+                  "    pm.expect(body.preferred_username).to.eql(pm.collectionVariables.get('demoUser'));",
+                  "    pm.expect(body.role).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl-okta}}/userinfo",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["userinfo"]
+            },
+            "description": "Bearer-protected userinfo resolves the SCIM directory entry."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "SCIM CRUD",
+      "description": "Provisioning surface at /scim/v2/Users with the demo bearer {{scimToken}}. Every response must be application/scim+json.",
+      "item": [
+        {
+          "name": "List users filtered by userName",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('scim+json content type', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.contain('application/scim+json');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('list response shape', () => {",
+                  "    pm.expect(body.schemas[0]).to.eql('urn:ietf:params:scim:api:messages:2.0:ListResponse');",
+                  "    pm.expect(body.totalResults).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{scimToken}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl-okta}}/scim/v2/Users?filter=userName%20eq%20%22admin%40corridor.example%22",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["scim", "v2", "Users"],
+              "query": [
+                { "key": "filter", "value": "userName%20eq%20%22admin%40corridor.example%22" }
+              ]
+            },
+            "description": "RFC 7644 filtered list; only the userName eq form is supported."
+          },
+          "response": []
+        },
+        {
+          "name": "Create user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('scimUserName', 'postman-' + Date.now() + '@corridor.example');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "pm.test('scim+json content type', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.contain('application/scim+json');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('created resource shape', () => {",
+                  "    pm.expect(body.userName).to.eql(pm.collectionVariables.get('scimUserName'));",
+                  "    pm.expect(body.id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.active).to.be.true;",
+                  "});",
+                  "pm.collectionVariables.set('scimUserId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{scimToken}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/scim+json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n  \"userName\": \"{{scimUserName}}\",\n  \"displayName\": \"Postman Provisioned\",\n  \"active\": true,\n  \"groups\": [{ \"display\": \"trace-reviewers\" }]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-okta}}/scim/v2/Users",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["scim", "v2", "Users"]
+            },
+            "description": "Creates a synthetic user with a unique userName so the request is re-runnable."
+          },
+          "response": []
+        },
+        {
+          "name": "Get user by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('scim+json content type', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.contain('application/scim+json');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('resource round trips', () => {",
+                  "    pm.expect(body.id).to.eql(pm.collectionVariables.get('scimUserId'));",
+                  "    pm.expect(body.userName).to.eql(pm.collectionVariables.get('scimUserName'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{scimToken}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl-okta}}/scim/v2/Users/{{scimUserId}}",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["scim", "v2", "Users", "{{scimUserId}}"]
+            },
+            "description": "Fetches the user created by the previous request."
+          },
+          "response": []
+        },
+        {
+          "name": "Patch user active to false",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('scim+json content type', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.contain('application/scim+json');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('replace op applied', () => {",
+                  "    pm.expect(body.active).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{scimToken}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/scim+json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n  \"Operations\": [\n    { \"op\": \"replace\", \"path\": \"active\", \"value\": false }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-okta}}/scim/v2/Users/{{scimUserId}}",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["scim", "v2", "Users", "{{scimUserId}}"]
+            },
+            "description": "Only replace ops on active and groups are supported by the simulated directory."
+          },
+          "response": []
+        },
+        {
+          "name": "Missing bearer gets a SCIM error",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "pm.test('scim+json content type', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.contain('application/scim+json');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('RFC 7644 error shape', () => {",
+                  "    pm.expect(body.schemas[0]).to.eql('urn:ietf:params:scim:api:messages:2.0:Error');",
+                  "    pm.expect(body.status).to.eql('401');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl-okta}}/scim/v2/Users",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["scim", "v2", "Users"]
+            },
+            "description": "Negative path: no Authorization header."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "XACML decide",
+      "description": "Raw XACML 2.0 context documents POSTed to the policy decision point, one per seeded policy shape plus a malformed request.",
+      "item": [
+        {
+          "name": "Officer reads trace-cases (Permit)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const xml = pm.response.text();",
+                  "pm.test('Permit from the trace-read policy', () => {",
+                  "    pm.expect(xml).to.contain('<Decision>Permit</Decision>');",
+                  "    pm.expect(xml).to.contain('corridor:policy:trace-read:1');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xacml+xml", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Request xmlns=\"urn:oasis:names:tc:xacml:2.0:context:schema:os\">\n  <Subject>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:2.0:subject:role\">\n      <AttributeValue>Officer</AttributeValue>\n    </Attribute>\n  </Subject>\n  <Resource>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n      <AttributeValue>trace-cases</AttributeValue>\n    </Attribute>\n  </Resource>\n  <Action>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\">\n      <AttributeValue>read</AttributeValue>\n    </Attribute>\n  </Action>\n</Request>",
+              "options": { "raw": { "language": "xml" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-okta}}/pdp/decide",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["pdp", "decide"]
+            },
+            "description": "Policy 10-trace-read-officers-admins.xacml.xml."
+          },
+          "response": []
+        },
+        {
+          "name": "Inspector writes assignments (Permit)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const xml = pm.response.text();",
+                  "pm.test('Permit from the assignments-write policy', () => {",
+                  "    pm.expect(xml).to.contain('<Decision>Permit</Decision>');",
+                  "    pm.expect(xml).to.contain('corridor:policy:assignments-write:1');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xacml+xml", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Request xmlns=\"urn:oasis:names:tc:xacml:2.0:context:schema:os\">\n  <Subject>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:2.0:subject:role\">\n      <AttributeValue>Inspector</AttributeValue>\n    </Attribute>\n  </Subject>\n  <Resource>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n      <AttributeValue>assignments</AttributeValue>\n    </Attribute>\n  </Resource>\n  <Action>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\">\n      <AttributeValue>write</AttributeValue>\n    </Attribute>\n  </Action>\n</Request>",
+              "options": { "raw": { "language": "xml" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-okta}}/pdp/decide",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["pdp", "decide"]
+            },
+            "description": "Policy 20-assignments-write-inspectors.xacml.xml."
+          },
+          "response": []
+        },
+        {
+          "name": "Clerk reads trace-cases (Deny)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const xml = pm.response.text();",
+                  "pm.test('Deny falls through to deny-all', () => {",
+                  "    pm.expect(xml).to.contain('<Decision>Deny</Decision>');",
+                  "    pm.expect(xml).to.contain('corridor:policy:deny-all:1');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xacml+xml", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Request xmlns=\"urn:oasis:names:tc:xacml:2.0:context:schema:os\">\n  <Subject>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:2.0:subject:role\">\n      <AttributeValue>Clerk</AttributeValue>\n    </Attribute>\n  </Subject>\n  <Resource>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n      <AttributeValue>trace-cases</AttributeValue>\n    </Attribute>\n  </Resource>\n  <Action>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\">\n      <AttributeValue>read</AttributeValue>\n    </Attribute>\n  </Action>\n</Request>",
+              "options": { "raw": { "language": "xml" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-okta}}/pdp/decide",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["pdp", "decide"]
+            },
+            "description": "No permit rule matches a Clerk, so policy 90-deny-all decides."
+          },
+          "response": []
+        },
+        {
+          "name": "Malformed request (Deny with status)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200, never a naked 500', () => pm.response.to.have.status(200));",
+                  "const xml = pm.response.text();",
+                  "pm.test('Deny with syntax-error status and obligation', () => {",
+                  "    pm.expect(xml).to.contain('<Decision>Deny</Decision>');",
+                  "    pm.expect(xml).to.contain('syntax-error');",
+                  "    pm.expect(xml).to.contain('Malformed XACML request');",
+                  "    pm.expect(xml).to.contain('Obligation');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xacml+xml", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "this is not an xacml request",
+              "options": { "raw": { "language": "text" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-okta}}/pdp/decide",
+              "host": ["{{baseUrl-okta}}"],
+              "path": ["pdp", "decide"]
+            },
+            "description": "Error discipline: malformed input still gets a real XACML Response document."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Portal REST",
+      "description": "The REST to SOAP bridge at /api/cases: bearer tokens from the OIDC folder, RFC 9457 problem details on errors.",
+      "item": [
+        {
+          "name": "Create trace case",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('case number shape', () => {",
+                  "    pm.expect(body.caseNumber).to.match(/^TRC-[0-9]{6}$/);",
+                  "});",
+                  "pm.collectionVariables.set('caseNumber', body.caseNumber);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"licenseeName\": \"Postman Bridge Firearms\",\n  \"itemDescription\": \"Merrin M-12 shotgun 12ga\",\n  \"serial\": \"PM-00441172\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-portal}}/api/cases",
+              "host": ["{{baseUrl-portal}}"],
+              "path": ["api", "cases"]
+            },
+            "description": "The portal relays this to the legacy SOAP CreateTraceRequest with its own service credential."
+          },
+          "response": []
+        },
+        {
+          "name": "Get trace case",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('case round trips through the bridge', () => {",
+                  "    pm.expect(body.caseNumber).to.eql(pm.collectionVariables.get('caseNumber'));",
+                  "    pm.expect(body.status).to.eql('Received');",
+                  "    pm.expect(body.licenseeName).to.eql('Postman Bridge Firearms');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl-portal}}/api/cases/{{caseNumber}}",
+              "host": ["{{baseUrl-portal}}"],
+              "path": ["api", "cases", "{{caseNumber}}"]
+            },
+            "description": "Reads back the case created by the previous request."
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid create returns RFC 9457 problem details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "pm.test('problem+json content type', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.contain('application/problem+json');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('problem shape', () => {",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "    pm.expect(body.title).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.detail).to.contain('licenseeName');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"licenseeName\": \"only a licensee\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-portal}}/api/cases",
+              "host": ["{{baseUrl-portal}}"],
+              "path": ["api", "cases"]
+            },
+            "description": "Missing itemDescription and serial must come back as a problem document, not a stack trace."
+          },
+          "response": []
+        },
+        {
+          "name": "Unknown case returns a 404 problem",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));",
+                  "pm.test('problem+json content type', () => {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.contain('application/problem+json');",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test('problem shape', () => {",
+                  "    pm.expect(body.status).to.eql(404);",
+                  "    pm.expect(body.title).to.contain('not found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl-portal}}/api/cases/TRC-999999",
+              "host": ["{{baseUrl-portal}}"],
+              "path": ["api", "cases", "TRC-999999"]
+            },
+            "description": "The SOAP CaseNotFound subcode maps onto a 404 problem document."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "SOAP TraceLink",
+      "description": "Raw SOAP 1.1 envelopes posted to /TraceLink.svc with the simplified WS-Security header: cor:Security in the http://corridor.example/security namespace carrying an unprefixed jwt element with {{jwt}} from the OIDC folder. Valid while the legacy app is in Dual or Okta trust mode.",
+      "item": [
+        {
+          "name": "SearchCases with service JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const xml = pm.response.text();",
+                  "pm.test('not a SOAP fault', () => {",
+                  "    pm.expect(xml).to.not.contain('<soap:Fault');",
+                  "    pm.expect(xml).to.not.contain(':Fault>');",
+                  "});",
+                  "pm.test('seeded rows come back', () => {",
+                  "    pm.expect(xml).to.contain('TRC-');",
+                  "    pm.expect(xml).to.contain('<CaseNumber>');",
+                  "});",
+                  "pm.test('response element namespaced to the contract', () => {",
+                  "    pm.expect(xml).to.contain('xmlns=\"http://corridor.example/tracelink/2026/08\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "text/xml; charset=utf-8", "type": "text" },
+              { "key": "SOAPAction", "value": "\"http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases\"", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <soap:Header>\n    <cor:Security xmlns:cor=\"http://corridor.example/security\">\n      <jwt>{{jwt}}</jwt>\n    </cor:Security>\n  </soap:Header>\n  <soap:Body>\n    <SearchCases xmlns=\"http://corridor.example/tracelink/2026/08\">\n      <requester>postman@corridor.example</requester>\n      <statusFilter></statusFilter>\n      <maxRows>10</maxRows>\n    </SearchCases>\n  </soap:Body>\n</soap:Envelope>",
+              "options": { "raw": { "language": "xml" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-legacy}}/TraceLink.svc",
+              "host": ["{{baseUrl-legacy}}"],
+              "path": ["TraceLink.svc"]
+            },
+            "description": "Hand-built envelope, the same wire profile SoapUI uses in the committed project file."
+          },
+          "response": []
+        },
+        {
+          "name": "GetCase with service JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const xml = pm.response.text();",
+                  "pm.test('not a SOAP fault', () => {",
+                  "    pm.expect(xml).to.not.contain(':Fault>');",
+                  "});",
+                  "pm.test('case payload', () => {",
+                  "    pm.expect(xml).to.contain('TRC-');",
+                  "    pm.expect(xml).to.contain('<Status>');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "text/xml; charset=utf-8", "type": "text" },
+              { "key": "SOAPAction", "value": "\"http://corridor.example/tracelink/2026/08/TraceLinkService/GetCase\"", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <soap:Header>\n    <cor:Security xmlns:cor=\"http://corridor.example/security\">\n      <jwt>{{jwt}}</jwt>\n    </cor:Security>\n  </soap:Header>\n  <soap:Body>\n    <GetCase xmlns=\"http://corridor.example/tracelink/2026/08\">\n      <caseNumber>{{caseNumber}}</caseNumber>\n    </GetCase>\n  </soap:Body>\n</soap:Envelope>",
+              "options": { "raw": { "language": "xml" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-legacy}}/TraceLink.svc",
+              "host": ["{{baseUrl-legacy}}"],
+              "path": ["TraceLink.svc"]
+            },
+            "description": "Fetches the case created through the portal bridge folder."
+          },
+          "response": []
+        },
+        {
+          "name": "Garbage token produces a cor fault",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('SOAP fault with subcode', () => {",
+                  "    const xml = pm.response.text();",
+                  "    pm.expect(xml).to.contain(':Fault>');",
+                  "    pm.expect(xml).to.contain('InvalidToken');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "text/xml; charset=utf-8", "type": "text" },
+              { "key": "SOAPAction", "value": "\"http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases\"", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <soap:Header>\n    <cor:Security xmlns:cor=\"http://corridor.example/security\">\n      <jwt>not.a.jwt</jwt>\n    </cor:Security>\n  </soap:Header>\n  <soap:Body>\n    <SearchCases xmlns=\"http://corridor.example/tracelink/2026/08\">\n      <requester>postman@corridor.example</requester>\n      <statusFilter></statusFilter>\n      <maxRows>10</maxRows>\n    </SearchCases>\n  </soap:Body>\n</soap:Envelope>",
+              "options": { "raw": { "language": "xml" } }
+            },
+            "url": {
+              "raw": "{{baseUrl-legacy}}/TraceLink.svc",
+              "host": ["{{baseUrl-legacy}}"],
+              "path": ["TraceLink.svc"]
+            },
+            "description": "The JWT fails signature validation, so the dispatch inspector raises cor:InvalidToken."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
