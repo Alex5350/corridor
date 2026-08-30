@@ -1,52 +1,50 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Corridor.Portal</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@(ViewData["Title"] is null ? "PermitPortal" : $"{ViewData["Title"]} | PermitPortal")</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Corridor.Portal.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">Corridor.Portal</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <div class="brand">
+                <a class="brand-link" asp-page="/Index">PermitPortal</a>
+                <span class="brand-sub">Corridor import permit program</span>
             </div>
-        </nav>
+            <nav class="site-nav" aria-label="Primary">
+                <a asp-page="/Index">Home</a>
+                <a asp-page="/Permits/Index">Permits</a>
+                <a asp-page="/Cases/Index">Cases</a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-page="/Admin/Migration">Migration</a>
+                    <a asp-page="/Admin/Audit">Audit</a>
+                }
+            </nav>
+            <div class="header-session">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <span class="who">@User.Identity.Name</span>
+                    <form class="inline-form" method="post" asp-page="/Logout">
+                        <button type="submit" class="link-button">Sign out</button>
+                    </form>
+                }
+                else
+                {
+                    <a class="signin" asp-page="/Login">Sign in</a>
+                }
+            </div>
+        </div>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Corridor.Portal - <a asp-area="" asp-page="/Privacy">Privacy</a>
+    <main class="shell">
+        @RenderBody()
+    </main>
+    <footer class="site-footer">
+        <div class="shell">
+            Synthetic demonstration environment for an identity migration program. No real agency data.
         </div>
     </footer>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-
-    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

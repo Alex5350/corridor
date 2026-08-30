@@ -1,0 +1,36 @@
+@page
+@model Corridor.Portal.Pages.Admin.AuditModel
+@{
+    ViewData["Title"] = "Audit trail";
+}
+
+<h1>Audit trail</h1>
+<p class="page-intro">The most recent idn.AuditEvents rows, newest first.</p>
+
+<table>
+    <thead>
+        <tr>
+            <th scope="col">At (UTC)</th>
+            <th scope="col">Actor</th>
+            <th scope="col">App</th>
+            <th scope="col">Event</th>
+            <th scope="col">Detail</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Events.Count == 0)
+        {
+            <tr><td colspan="5">No audit events recorded yet.</td></tr>
+        }
+        @foreach (var auditEvent in Model.Events)
+        {
+            <tr>
+                <td>@auditEvent.At.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@auditEvent.Actor</td>
+                <td>@auditEvent.AppKey</td>
+                <td>@auditEvent.Event</td>
+                <td>@auditEvent.Detail</td>
+            </tr>
+        }
+    </tbody>
+</table>

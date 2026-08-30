@@ -1,0 +1,62 @@
+@page
+@model Corridor.Portal.Pages.Admin.MigrationModel
+@{
+    ViewData["Title"] = "Migration dashboard";
+}
+
+<h1>Migration dashboard</h1>
+<p class="page-intro">
+    Live trust state for the three Corridor applications. Flip cycles Adfs to Dual to Okta and back
+    to Adfs; every flip writes the idn.MigrationApps row and a TrustModeChanged audit event.
+</p>
+
+@if (Model.StatusMessage is not null)
+{
+    <div class="notice success" role="status">@Model.StatusMessage</div>
+}
+@if (Model.ErrorMessage is not null)
+{
+    <div class="notice error" role="alert">@Model.ErrorMessage</div>
+}
+
+<table>
+    <thead>
+        <tr>
+            <th scope="col">Application</th>
+            <th scope="col">Key</th>
+            <th scope="col">Trust mode</th>
+            <th scope="col">Last flipped</th>
+            <th scope="col">Flipped by</th>
+            <th scope="col">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var app in Model.Apps)
+        {
+            <tr>
+                <td>@app.AppName</td>
+                <td>@app.AppKey</td>
+                <td><span class="badge badge-@Corridor.Portal.Models.TrustModes.Label(app.TrustMode).ToLowerInvariant()">@Corridor.Portal.Models.TrustModes.Label(app.TrustMode)</span></td>
+                <td>@(app.LastFlippedAt?.ToString("yyyy-MM-dd HH:mm 'UTC'") ?? "never")</td>
+                <td>@(app.FlippedBy ?? "-")</td>
+                <td>
+                    <form class="inline-form" method="post" asp-page-handler="Flip" asp-route-appKey="@app.AppKey">
+                        <button class="button secondary" type="submit">Flip to @Corridor.Portal.Pages.Admin.MigrationModel.NextModeLabel(app.TrustMode)</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="card">
+    <h2>What the modes mean</h2>
+    <dl class="facts">
+        <dt>Adfs</dt>
+        <dd>The application trusts the ADFS provider only (portal: SAML redirect sign-in).</dd>
+        <dt>Dual</dt>
+        <dd>Both providers are trusted (portal: chooser page, ACS accepts either certificate).</dd>
+        <dt>Okta</dt>
+        <dd>Okta only (portal: OIDC authorization code, SAML responses are refused).</dd>
+    </dl>
+</div>

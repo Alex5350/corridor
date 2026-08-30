@@ -1,0 +1,112 @@
+@page
+@model Cases.IndexModel
+@{
+    ViewData["Title"] = "Trace cases";
+}
+
+<h1>TraceLink trace cases</h1>
+<p class="page-intro">
+    Cases live in the legacy SOAP service. This page and the JSON bridge at /api/cases call it
+    through the same client, carrying the portal's service credential in the SOAP security header.
+</p>
+
+@if (Model.StatusMessage is not null)
+{
+    <div class="notice success" role="status">@Model.StatusMessage</div>
+}
+@if (Model.ErrorMessage is not null)
+{
+    <div class="notice error" role="alert">@Model.ErrorMessage</div>
+}
+
+<div class="card-grid">
+    <div class="card">
+        <h2>Create trace request</h2>
+        <form class="stack" method="post" asp-page-handler="Create">
+            <div>
+                <label asp-for="Create.LicenseeName">Licensee name</label>
+                <input asp-for="Create.LicenseeName" />
+                <span class="field-error" asp-validation-for="Create.LicenseeName"></span>
+            </div>
+            <div>
+                <label asp-for="Create.ItemDescription">Item description</label>
+                <input asp-for="Create.ItemDescription" />
+                <span class="field-error" asp-validation-for="Create.ItemDescription"></span>
+            </div>
+            <div>
+                <label asp-for="Create.Serial">Serial number</label>
+                <input asp-for="Create.Serial" />
+                <span class="field-error" asp-validation-for="Create.Serial"></span>
+            </div>
+            <div>
+                <button class="button" type="submit">Submit trace request</button>
+            </div>
+        </form>
+    </div>
+    <div class="card">
+        <h2>Update case status</h2>
+        <form class="stack" method="post" asp-page-handler="UpdateStatus">
+            <div>
+                <label asp-for="StatusUpdate.CaseNumber">Case number</label>
+                <input asp-for="StatusUpdate.CaseNumber" placeholder="TRC-100101" />
+                <span class="field-error" asp-validation-for="StatusUpdate.CaseNumber"></span>
+            </div>
+            <div>
+                <label asp-for="StatusUpdate.NewStatus">New status</label>
+                <select asp-for="StatusUpdate.NewStatus" asp-items="Cases.IndexModel.StatusSelectList"></select>
+                <span class="field-error" asp-validation-for="StatusUpdate.NewStatus"></span>
+            </div>
+            <div>
+                <button class="button" type="submit">Update status</button>
+            </div>
+        </form>
+        <p class="page-intro">Legal transitions: Received to UnderReview or Rejected, UnderReview to Traced or Rejected, Traced to Closed.</p>
+    </div>
+</div>
+
+<h2>Case list</h2>
+<form class="filter-bar" method="get" asp-page="/Cases/Index">
+    <div>
+        <label for="statusFilter">Filter by status</label>
+        <select id="statusFilter" name="statusFilter">
+            <option value="">All statuses</option>
+            @foreach (var status in Cases.IndexModel.StatusOptions)
+            {
+                <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
+            }
+        </select>
+    </div>
+    <button class="button secondary" type="submit">Apply filter</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th scope="col">Case number</th>
+            <th scope="col">Licensee</th>
+            <th scope="col">Item</th>
+            <th scope="col">Serial</th>
+            <th scope="col">Status</th>
+            <th scope="col">Submitted</th>
+            <th scope="col">Disposition</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Cases.Count == 0)
+        {
+            <tr><td colspan="7">No trace cases match this filter.</td></tr>
+        }
+        @foreach (var traceCase in Model.Cases)
+        {
+            <tr>
+                <td>@traceCase.CaseNumber</td>
+                <td>@traceCase.LicenseeName</td>
+                <td>@traceCase.ItemDescription</td>
+                <td>@traceCase.Serial</td>
+                <td><span class="badge badge-@traceCase.Status.ToLowerInvariant()">@traceCase.Status</span></td>
+                <td>@traceCase.SubmittedAt.ToString("yyyy-MM-dd HH:mm 'UTC'")</td>
+                <td>@traceCase.Disposition</td>
+            </tr>
+        }
+    </tbody>
+</table>

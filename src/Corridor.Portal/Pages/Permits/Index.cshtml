@@ -1,0 +1,95 @@
+@page
+@model Permits.IndexModel
+@{
+    ViewData["Title"] = "Permits";
+}
+
+<h1>Import permit applications</h1>
+<p class="page-intro">
+    Applications recorded in perm.ImportPermits. New submissions enter UnderReview status.
+</p>
+
+@if (Model.StatusMessage is not null)
+{
+    <div class="notice success" role="status">@Model.StatusMessage</div>
+}
+@if (Model.ErrorMessage is not null)
+{
+    <div class="notice error" role="alert">@Model.ErrorMessage</div>
+}
+
+<div class="card">
+    <h2>Apply for an import permit</h2>
+    <form class="stack" method="post" asp-page-handler="Apply">
+        <div>
+            <label asp-for="Apply.LicenseeName">Licensee name</label>
+            <input asp-for="Apply.LicenseeName" autocomplete="organization" />
+            <span class="field-error" asp-validation-for="Apply.LicenseeName"></span>
+        </div>
+        <div>
+            <label asp-for="Apply.ItemDescription">Item description</label>
+            <input asp-for="Apply.ItemDescription" placeholder="Make, model, caliber or gauge" />
+            <span class="field-error" asp-validation-for="Apply.ItemDescription"></span>
+        </div>
+        <div>
+            <label asp-for="Apply.Quantity">Quantity</label>
+            <input asp-for="Apply.Quantity" inputmode="numeric" min="1" max="100000" />
+            <span class="field-error" asp-validation-for="Apply.Quantity"></span>
+        </div>
+        <div>
+            <label asp-for="Apply.Purpose">Purpose</label>
+            <input asp-for="Apply.Purpose" placeholder="Business reason for the import" />
+            <span class="field-error" asp-validation-for="Apply.Purpose"></span>
+        </div>
+        <div>
+            <button class="button" type="submit">Submit application</button>
+        </div>
+    </form>
+</div>
+
+<h2>Application records</h2>
+<form class="filter-bar" method="get" asp-page="/Permits/Index">
+    <div>
+        <label for="statusFilter">Filter by status</label>
+        <select id="statusFilter" name="statusFilter" onchange="this.form.submit()">
+            <option value="">All statuses</option>
+            @foreach (var status in Permits.IndexModel.StatusOptions)
+            {
+                <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
+            }
+        </select>
+    </div>
+    <button class="button secondary" type="submit">Apply filter</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th scope="col">Permit number</th>
+            <th scope="col">Licensee</th>
+            <th scope="col">Item</th>
+            <th scope="col" class="num">Qty</th>
+            <th scope="col">Status</th>
+            <th scope="col">Submitted</th>
+            <th scope="col">By</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Permits.Count == 0)
+        {
+            <tr><td colspan="7">No permit applications match this filter.</td></tr>
+        }
+        @foreach (var permit in Model.Permits)
+        {
+            <tr>
+                <td>@permit.PermitNumber</td>
+                <td>@permit.LicenseeName</td>
+                <td>@permit.ItemDescription</td>
+                <td class="num">@permit.Quantity</td>
+                <td><span class="badge badge-@permit.Status.ToLowerInvariant()">@permit.Status</span></td>
+                <td>@permit.SubmittedAt.ToString("yyyy-MM-dd HH:mm 'UTC'")</td>
+                <td>@permit.SubmittedBy</td>
+            </tr>
+        }
+    </tbody>
+</table>

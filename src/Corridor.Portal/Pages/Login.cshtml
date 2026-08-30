@@ -1,0 +1,38 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Sign in";
+}
+
+<h1>Sign in</h1>
+<p class="page-intro">
+    The portal routes sign-in by its current trust mode. Demo users are admin, inspector,
+    officer, and clerk at corridor.example; the demo password is Demo1234!.
+</p>
+
+@if (Model.ErrorMessage is not null)
+{
+    <div class="notice error" role="alert">@Model.ErrorMessage</div>
+}
+
+@if (Model.ShowChooser)
+{
+    <div class="card">
+        <h2>Dual trust is active</h2>
+        <p>The portal accepts sign-in from both providers while the migration runs. Choose one:</p>
+        <div class="provider-chooser">
+            <a class="button" href="/Login?provider=Adfs&returnUrl=@Uri.EscapeDataString(Model.SafeReturnUrl)">Continue with ADFS</a>
+            <a class="button secondary" href="/Login?provider=Okta&returnUrl=@Uri.EscapeDataString(Model.SafeReturnUrl)">Continue with Okta</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card">
+        <h2>Redirecting</h2>
+        <p>The portal is in @Model.TrustModeLabel mode. If you are not redirected, use the button below.</p>
+        <div class="provider-chooser">
+            <a class="button" href="/Login">Try sign-in again</a>
+        </div>
+    </div>
+}

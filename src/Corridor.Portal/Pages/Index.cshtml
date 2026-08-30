@@ -1,10 +1,67 @@
-﻿@page
+@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<h1>Import permit program</h1>
+<p class="page-intro">
+    PermitPortal is the working web application of the Corridor program: import permit applications
+    for licensed firearms dealers, plus a REST bridge into the legacy TraceLink trace case service.
+    The program is mid-migration from an ADFS identity provider to Okta, and this portal shows the
+    live trust state for each application.
+</p>
+
+@if (Model.ErrorMessage is not null)
+{
+    <div class="notice error" role="alert">@Model.ErrorMessage</div>
+}
+
+<div class="card-grid">
+    <div class="card">
+        <h2>Sign-in status</h2>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <dl class="facts">
+                <dt>Signed in as</dt>
+                <dd>@User.Identity.Name</dd>
+                <dt>Role</dt>
+                <dd>@string.Join(", ", Model.Roles)</dd>
+                <dt>Identity provider</dt>
+                <dd>@Model.IdentityProvider</dd>
+            </dl>
+            <p><a class="button" asp-page="/Permits/Index">Go to permits</a></p>
+        }
+        else
+        {
+            <p>Not signed in. Demo accounts use the password <code>Demo1234!</code>.</p>
+            <p><a class="button" asp-page="/Login">Sign in</a></p>
+        }
+    </div>
+    <div class="card">
+        <h2>Portal trust mode</h2>
+        <dl class="facts">
+            <dt>Mode</dt>
+            <dd><span class="badge badge-@Model.TrustModeLabel.ToLowerInvariant()">@Model.TrustModeLabel</span></dd>
+            <dt>Sign-in path</dt>
+            <dd>@Model.SignInPathDescription</dd>
+            <dt>Last flipped</dt>
+            <dd>@(Model.LastFlippedAt?.ToString("yyyy-MM-dd HH:mm 'UTC'") ?? "never")</dd>
+        </dl>
+        @if (User.IsInRole("Admin"))
+        {
+            <p><a class="button secondary" asp-page="/Admin/Migration">Open migration dashboard</a></p>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <h2>What this portal does</h2>
+    <ul>
+        <li><strong>Permits:</strong> list and submit import permit applications (status: UnderReview, Approved, Rejected).</li>
+        <li><strong>Cases:</strong> create trace requests and review case status through the legacy SOAP service.</li>
+        <li><strong>REST bridge:</strong> JSON endpoints under <code>/api/cases</code> translating REST to SOAP.</li>
+        <li><strong>Inspector API:</strong> <code>/api/assignments</code> serves the FieldInsight SPA after cutover.</li>
+        <li><strong>Migration dashboard:</strong> admins flip each application between ADFS, Dual, and Okta trust.</li>
+    </ul>
 </div>
