@@ -1,0 +1,37 @@
+# Corridor TraceLink legacy service systemd unit (CoreWCF SOAP 1.1 on port
+# 8000). Values mirror the local compose stack; secrets are the documented
+# synthetic demo values.
+[Unit]
+Description=Corridor legacy TraceLink SOAP service (CoreWCF, port 8000)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=corridor
+Group=corridor
+WorkingDirectory=/opt/corridor/legacy
+ExecStart=/usr/bin/dotnet /opt/corridor/legacy/Corridor.Legacy.dll
+Restart=always
+RestartSec=3
+
+# AmbientCapabilities note: unprivileged demo port, nothing required; the
+# setting stays for sites that rebind the service to port 80/443.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://+:8000
+Environment=ConnectionStrings__Corridor=Server=sql.corridor.internal,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True
+Environment=Corridor__Adfs__AudienceUri=http://legacy.corridor.internal:8000/TraceLink.svc
+Environment=Corridor__Adfs__SigningCertPath=/opt/corridor/certs/adfs-sim-cert.pem
+Environment=Corridor__Okta__Issuer=http://oktasim.corridor.internal:8080
+Environment=Corridor__Okta__Audience=legacy
+Environment=Corridor__Okta__JwksUrl=http://oktasim.corridor.internal:8080/jwks
+
+# Light sandboxing.
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

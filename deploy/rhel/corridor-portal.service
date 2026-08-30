@@ -1,0 +1,46 @@
+# Corridor PermitPortal systemd unit (ASP.NET Core MVC on port 5200).
+# Environment values below mirror the local compose stack with placeholder
+# hostnames (oktasim.corridor.internal and friends); the passwords and client
+# secrets are the documented synthetic demo values, not real secrets.
+# For a real site, move secrets into an EnvironmentFile with mode 600 and
+# reference it with EnvironmentFile=/etc/corridor/portal.env.
+[Unit]
+Description=Corridor PermitPortal (ASP.NET Core MVC, port 5200)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=corridor
+Group=corridor
+WorkingDirectory=/opt/corridor/portal
+ExecStart=/usr/bin/dotnet /opt/corridor/portal/Corridor.Portal.dll
+Restart=always
+RestartSec=3
+
+# AmbientCapabilities note: the demo listens on unprivileged ports (5200 and
+# up) so no capability is needed. If you move the portal to port 80/443 as an
+# unprivileged user, keep CAP_NET_BIND_SERVICE here (and prefer a reverse
+# proxy instead).
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://+:5200
+Environment=ConnectionStrings__Corridor=Server=sql.corridor.internal,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True
+Environment=Okta__Authority=http://oktasim.corridor.internal:8080
+Environment=Okta__ClientId=portal
+Environment=Okta__ClientSecret=corridor-portal-secret
+Environment=Adfs__BaseAddress=http://adfssim.corridor.internal:8090
+Environment=Adfs__CertificatePath=/opt/corridor/certs/adfs-sim-cert.pem
+Environment=Adfs__PrivateKeyPath=/opt/corridor/certs/adfs-sim-key.pem
+Environment=Legacy__ServiceUrl=http://legacy.corridor.internal:8000/TraceLink.svc
+Environment=Legacy__OktaClientId=legacy
+Environment=Legacy__OktaClientSecret=corridor-legacy-secret
+
+# Light sandboxing; loosen if your site needs writing to the working dir.
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

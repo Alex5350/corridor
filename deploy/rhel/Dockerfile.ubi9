@@ -1,0 +1,41 @@
+# Parameterized RHEL 9 (UBI 9) image for the Corridor .NET services, the
+# RHEL flavored sibling of deploy/dotnet.Dockerfile. Build args:
+#   SERVICE_PORT  container port for EXPOSE (app binds via ASPNETCORE_URLS)
+#   ASSEMBLY      assembly name without .dll (drives the entrypoint)
+#   PUBLISH_DIR   directory holding dotnet publish output, relative to the
+#                 build context (repo root)
+# Example (after: dotnet publish src/Corridor.Portal/Corridor.Portal.csproj
+# -c Release -o src/Corridor.Portal/publish):
+#   podman build -f deploy/rhel/Dockerfile.ubi9 \
+#     --build-arg PUBLISH_DIR=src/Corridor.Portal/publish \
+#     --build-arg ASSEMBLY=Corridor.Portal --build-arg SERVICE_PORT=5200 \
+#     -t corridor-portal:rhel9 .
+FROM registry.access.redhat.com/ubi9/ubi
+
+ARG SERVICE_PORT=8080
+ARG ASSEMBLY=Corridor.OktaSim
+ARG PUBLISH_DIR=publish
+
+# libicu covers .NET globalization; the ASP.NET Core runtime comes from the
+# RHEL 9 AppStream dotnet channel (dnf list aspnetcore-runtime-10.0 to verify
+# availability on your minor release). No SDK in the runtime image on purpose.
+RUN dnf install -y libicu aspnetcore-runtime-10.0 \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+WORKDIR /app
+COPY ${PUBLISH_DIR}/ ./
+
+# Shared demo assets (signing material, XACML policies), same layout as the
+# generic dotnet image; point services at them with absolute config paths.
+COPY certs/ /corridor/certs/
+COPY policies/ /corridor/policies/
+
+# UBI convention: run as the unprivileged uid 1001.
+USER 1001
+
+ENV DOTNET_ASSEMBLY=${ASSEMBLY}.dll
+EXPOSE ${SERVICE_PORT}
+
+# exec keeps dotnet as PID 1 for clean SIGTERM handling.
+ENTRYPOINT ["/bin/sh", "-c", "exec dotnet \"$DOTNET_ASSEMBLY\""]

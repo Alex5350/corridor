@@ -1,0 +1,52 @@
+# GitLab CI mirror of .github/workflows/ci.yml (stages build, test,
+# integrate). Kept in parity with the GitHub workflow by choice; this repo
+# actually runs on GitHub Actions, so this file exists for parity and for
+# anyone importing the project into GitLab.
+
+stages:
+  - build
+  - test
+  - integrate
+
+variables:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+
+default:
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+
+build:
+  stage: build
+  script:
+    - dotnet restore Corridor.slnx
+    - dotnet build Corridor.slnx --no-restore
+
+unit-test:
+  stage: test
+  script:
+    # Same exclusion as ci.yml: integration tests move to the integrate
+    # stage where the docker db service is available.
+    - dotnet test Corridor.slnx --no-restore --filter "FullyQualifiedName!~IntegrationTests"
+
+integration-test:
+  stage: integrate
+  # Mirrors the integrate job in ci.yml: db-only compose stack, then the
+  # integration test project against localhost:1433. Requires a runner with
+  # privileged mode for the docker-in-docker service.
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - docker compose version
+  script:
+    - docker compose --profile ci up -d db
+    - sh scripts/test-db-only.sh
+    - |
+      docker run --rm -v "$PWD:$PWD" -w "$PWD" \
+        -e ConnectionStrings__Corridor="Server=localhost,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True" \
+        mcr.microsoft.com/dotnet/sdk:10.0 \
+        dotnet test tests/Corridor.IntegrationTests/Corridor.IntegrationTests.csproj
+  after_script:
+    - docker compose --profile ci down

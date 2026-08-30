@@ -1,0 +1,25 @@
+# Build context filter for the .NET service images (context = repo root,
+# dockerfile = deploy/dotnet.Dockerfile). Keeps the context small and stops
+# local bin/obj and node_modules from leaking into image layers.
+.git
+.gitignore
+.github
+.gitlab-ci.yml
+Jenkinsfile
+sonar-project.properties
+docker-compose.yml
+**/bin
+**/obj
+**/node_modules
+src/Corridor.Spa/dist
+docs
+screenshots
+scripts
+deploy
+db
+postman
+soapui
+jmeter
+tests
+e2e
+*.md

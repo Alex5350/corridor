@@ -1,0 +1,222 @@
+# Corridor local demo stack.
+#
+# Topology (contract ports, all synthetic demo services):
+#   db        SQL Server (azure-sql-edge, arm64 native like mediflow)   host 1433
+#   db-init   one-shot sqlcmd sidecar applying db/sql in order          no port
+#   oktasim   Corridor.OktaSim  (OIDC/SAML/SCIM/XACML IdP simulation)   host 8080
+#   adfssim   Corridor.AdfsSim  (legacy SAML 2.0 IdP simulation)        host 8090
+#   legacy    Corridor.Legacy   (TraceLink SOAP service)                host 8000
+#   portal    Corridor.Portal   (PermitPortal web app)                  host 5200
+#   oktasim-shim  loopback forwarder, see below                         no port
+#   spa       Corridor.Spa      (FieldInsight nginx container)          host 5173
+#
+# Profiles:
+#   --profile full  everything (this is what scripts/dev-up.sh uses)
+#   --profile ci    db + db-init only, for integration-test runs
+#
+# Notes:
+#   Passwords and client secrets below are the documented synthetic demo
+#   values from docs/contracts/ARCHITECTURE-CONTRACT.md, never real secrets.
+#   The db-init sidecar runs the amd64 mssql/server image purely as an sqlcmd
+#   client (azure-sql-edge ships no sqlcmd; on arm64 Macs the client runs
+#   under Rosetta emulation, the server stays native). SQL_PORT overrides the
+#   published db port when 1433 is taken, PORTAL_PORT when macOS AirPlay
+#   Receiver holds 5200; SQL_IMAGE swaps the server image.
+name: corridor
+
+services:
+  db:
+    image: ${SQL_IMAGE:-mcr.microsoft.com/azure-sql-edge:latest}
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "CorridorDev1!"
+    ports:
+      - "${SQL_PORT:-1433}:1433"
+    volumes:
+      - corridor-mssql-data:/var/opt/mssql
+    # azure-sql-edge has no sqlcmd, so the healthcheck probes the TDS listener
+    # with bash /dev/tcp; the db-init sidecar layers a real login probe on top.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/1433"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    profiles: ["full", "ci"]
+
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    environment:
+      SA_PASSWORD: "CorridorDev1!"
+    volumes:
+      - ./db/sql:/sql:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    # Retry a real login until the engine answers, then apply the three
+    # scripts in order. -b makes sqlcmd exit non-zero on the first SQL error.
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -euo pipefail
+        echo "db-init: waiting for SQL Server at db:1433"
+        ready=0
+        for i in $$(seq 1 60); do
+          if /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$$SA_PASSWORD" -C -b -l 5 -Q "SELECT 1" >/dev/null 2>&1; then
+            ready=1
+            break
+          fi
+          sleep 2
+        done
+        if [ "$$ready" != "1" ]; then
+          echo "db-init: SQL Server never became ready" >&2
+          exit 1
+        fi
+        for f in /sql/001_schemas.sql /sql/002_trace_procs.sql /sql/seed/003_seed.sql; do
+          echo "db-init: applying $$f"
+          /opt/mssql-tools18/bin/sqlcmd -S db -U sa -P "$$SA_PASSWORD" -C -b -l 15 -i "$$f"
+        done
+        echo "db-init: all database scripts applied"
+    restart: "no"
+    profiles: ["full", "ci"]
+
+  oktasim:
+    build:
+      context: .
+      dockerfile: deploy/dotnet.Dockerfile
+      args:
+        PROJECT_PATH: src/Corridor.OktaSim/Corridor.OktaSim.csproj
+        ASSEMBLY: Corridor.OktaSim
+        SERVICE_PORT: "8080"
+    image: corridor-oktasim:local
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Corridor: "Server=db,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True"
+      OktaSim__SigningKeyPem: /corridor/certs/okta-sim-signing-key.pem
+      OktaSim__PoliciesDir: /corridor/policies
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["full"]
+
+  adfssim:
+    build:
+      context: .
+      dockerfile: deploy/dotnet.Dockerfile
+      args:
+        PROJECT_PATH: src/Corridor.AdfsSim/Corridor.AdfsSim.csproj
+        ASSEMBLY: Corridor.AdfsSim
+        SERVICE_PORT: "8090"
+    image: corridor-adfssim:local
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8090
+      ConnectionStrings__Corridor: "Server=db,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True"
+      AdfsSim__CertificatePath: /corridor/certs/adfs-sim-cert.pem
+      AdfsSim__KeyPath: /corridor/certs/adfs-sim-key.pem
+    ports:
+      - "8090:8090"
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["full"]
+
+  legacy:
+    build:
+      context: .
+      dockerfile: deploy/dotnet.Dockerfile
+      args:
+        PROJECT_PATH: src/Corridor.Legacy/Corridor.Legacy.csproj
+        ASSEMBLY: Corridor.Legacy
+        SERVICE_PORT: "8000"
+    image: corridor-legacy:local
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8000
+      ConnectionStrings__Corridor: "Server=db,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True"
+      Corridor__Adfs__SigningCertPath: /corridor/certs/adfs-sim-cert.pem
+      # Server-to-server JWKS fetch: the container network name, not localhost.
+      Corridor__Okta__JwksUrl: http://oktasim:8080/jwks
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["full"]
+
+  portal:
+    build:
+      context: .
+      dockerfile: deploy/dotnet.Dockerfile
+      args:
+        PROJECT_PATH: src/Corridor.Portal/Corridor.Portal.csproj
+        ASSEMBLY: Corridor.Portal
+        SERVICE_PORT: "5200"
+    image: corridor-portal:local
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5200
+      ConnectionStrings__Corridor: "Server=db,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True"
+      Adfs__CertificatePath: /corridor/certs/adfs-sim-cert.pem
+      Adfs__PrivateKeyPath: /corridor/certs/adfs-sim-key.pem
+      # Server-to-server SOAP calls use the compose network name.
+      Legacy__ServiceUrl: http://legacy:8000/TraceLink.svc
+      Legacy__OktaClientSecret: "corridor-legacy-secret"
+      # The OIDC authority stays http://localhost:8080 because the browser must
+      # reach okta-sim on the published port; the oktasim-shim service below
+      # makes that same URL work for this container's back-channel calls.
+      Okta__ClientSecret: "corridor-portal-secret"
+    # macOS note: AirPlay Receiver listens on host port 5200 by default. Either
+    # disable it (System Settings > General > AirDrop & Handoff) or run the
+    # stack with PORTAL_PORT=5500 (the demo contract port stays 5200 inside
+    # the container network and in every service's configuration).
+    ports:
+      - "${PORTAL_PORT:-5200}:5200"
+    depends_on:
+      db:
+        condition: service_healthy
+      oktasim:
+        condition: service_started
+      legacy:
+        condition: service_started
+    profiles: ["full"]
+
+  # The portal's OIDC handler, JWT bearer validator and service-token client
+  # all derive their endpoints from Okta__Authority (http://localhost:8080),
+  # which the browser resolves on the host. This shim shares the portal's
+  # network namespace and forwards portal-local 127.0.0.1:8080 to the oktasim
+  # container, so one URL serves both browser and back-channel without code
+  # changes in src/.
+  oktasim-shim:
+    image: alpine/socat:latest
+    command: "-d -d TCP-LISTEN:8080,bind=127.0.0.1,fork,reuseaddr TCP:oktasim:8080"
+    network_mode: "service:portal"
+    depends_on:
+      portal:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["full"]
+
+  spa:
+    # Repo-root context with the parameterized SPA dockerfile: compose resolves
+    # the dockerfile inside the build context, so it cannot live outside it.
+    build:
+      context: .
+      dockerfile: deploy/spa.Dockerfile
+      args:
+        SRC_DIR: src/Corridor.Spa
+    image: corridor-spa:local
+    ports:
+      - "5173:5173"
+    depends_on:
+      portal:
+        condition: service_started
+    profiles: ["full"]
+
+volumes:
+  corridor-mssql-data:

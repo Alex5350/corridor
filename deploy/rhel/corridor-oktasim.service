@@ -1,0 +1,35 @@
+# Corridor okta-sim systemd unit (OIDC/SAML/SCIM/XACML simulation IdP on
+# port 8080). Values mirror the local compose stack; secrets are the
+# documented synthetic demo values.
+[Unit]
+Description=Corridor okta-sim (ASP.NET Core minimal APIs, port 8080)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=corridor
+Group=corridor
+WorkingDirectory=/opt/corridor/oktasim
+ExecStart=/usr/bin/dotnet /opt/corridor/oktasim/Corridor.OktaSim.dll
+Restart=always
+RestartSec=3
+
+# AmbientCapabilities note: unprivileged demo port, nothing required; the
+# setting stays for sites that rebind the service to port 80/443.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://+:8080
+Environment=ConnectionStrings__Corridor=Server=sql.corridor.internal,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True
+Environment=OktaSim__Issuer=http://oktasim.corridor.internal:8080
+Environment=OktaSim__SigningKeyPem=/opt/corridor/certs/okta-sim-signing-key.pem
+Environment=OktaSim__PoliciesDir=/opt/corridor/policies
+
+# Light sandboxing.
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
