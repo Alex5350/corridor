@@ -1,0 +1,141 @@
+# CI for the Corridor repo. Jobs:
+#   build-test  restore, build and unit test the solution (no docker needed)
+#   spa         lint, unit test and build the FieldInsight SPA
+#   artifacts   parse-check the committed XML/JSON test artifacts
+#   integrate   db-only compose stack plus the integration test project
+# The unit path never touches docker, so pull requests stay fast and green.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: build and unit test (net10)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: restore
+        run: dotnet restore Corridor.slnx
+      - name: build
+        run: dotnet build Corridor.slnx --no-restore --nologo
+      - name: unit test
+        # Exclude the integration suite: it needs the docker db stack from the
+        # integrate job below, everything here runs plain and container free.
+        run: >
+          dotnet test Corridor.slnx --no-build --nologo
+          --filter "FullyQualifiedName!~IntegrationTests"
+
+  spa:
+    name: spa lint, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: src/Corridor.Spa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/Corridor.Spa/package-lock.json
+      - name: npm ci
+        run: npm ci
+      - name: lint
+        run: npm run lint
+      - name: unit test
+        run: npm test
+      - name: build
+        run: npm run build
+
+  artifacts:
+    name: validate committed artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: parse XML and JSON artifacts
+        run: |
+          python3 - <<'PY'
+          import glob, json, os, sys
+          import xml.etree.ElementTree as ET
+
+          # Committed tooling artifacts. Missing files are skipped with a
+          # warning (they land in the repo via separate changes), malformed
+          # files fail the job.
+          json_targets = [
+              "postman/Corridor.postman_collection.json",
+          ]
+          xml_targets = [
+              "soapui/Corridor-TraceLink-soapui-project.xml",
+              "jmeter/corridor-flow.jmx",
+          ] + sorted(glob.glob("policies/*.xacml.xml"))
+
+          missing, failed = [], []
+          for path in json_targets:
+              if not os.path.isfile(path):
+                  missing.append(path)
+                  continue
+              try:
+                  with open(path, encoding="utf-8") as handle:
+                      json.load(handle)
+                  print(f"ok json  {path}")
+              except Exception as exc:
+                  failed.append(f"{path}: {exc}")
+          for path in xml_targets:
+              if not os.path.isfile(path):
+                  missing.append(path)
+                  continue
+              try:
+                  ET.parse(path)
+                  print(f"ok xml   {path}")
+              except Exception as exc:
+                  failed.append(f"{path}: {exc}")
+
+          if missing:
+              print("warning: missing (skipped, not committed yet?):")
+              for path in missing:
+                  print(f"  {path}")
+          if failed:
+              print("artifact parse failures:")
+              for line in failed:
+                  print(f"  {line}")
+              sys.exit(1)
+          print("artifact validation complete")
+          PY
+
+  integrate:
+    name: integration tests (compose db)
+    needs: build-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: restore integration tests
+        run: dotnet restore tests/Corridor.IntegrationTests/Corridor.IntegrationTests.csproj
+      - name: start db and apply scripts
+        run: bash scripts/test-db-only.sh
+      - name: integration test
+        env:
+          ConnectionStrings__Corridor: "Server=localhost,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True"
+        run: >
+          dotnet test tests/Corridor.IntegrationTests/Corridor.IntegrationTests.csproj
+          --no-restore --nologo
