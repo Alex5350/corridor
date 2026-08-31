@@ -94,3 +94,14 @@ BEGIN
     );
 END;
 GO
+
+/* Secondary indexes for the hot query paths (all guarded, idempotent). */
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_TraceCases_Status_SubmittedAt' AND object_id = OBJECT_ID('trace.TraceCases'))
+    CREATE INDEX IX_TraceCases_Status_SubmittedAt ON trace.TraceCases (Status, SubmittedAt DESC);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_ImportPermits_Status_SubmittedAt' AND object_id = OBJECT_ID('perm.ImportPermits'))
+    CREATE INDEX IX_ImportPermits_Status_SubmittedAt ON perm.ImportPermits (Status, SubmittedAt DESC);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Assignments_Inspector_DueAt' AND object_id = OBJECT_ID('idn.Assignments'))
+    CREATE INDEX IX_Assignments_Inspector_DueAt ON idn.Assignments (InspectorUpn, DueAt);
+GO
