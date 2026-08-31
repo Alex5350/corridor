@@ -1,0 +1,56 @@
+name: Security
+
+# No secrets required: both jobs run on free public-repo runners. Mirrors the
+# security posture of the portfolio's other flagships (see docs/security.md for
+# the demo-grade caveats this scanning complements).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "23 4 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets-scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan full history for hardcoded secrets
+        uses: gitleaks/gitleaks-action@ff98106e4c1b47b5c50f372521ea966a5e35e3e5 # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # The committed demo constants (client secrets, the scim token, dev certs)
+        # are documented demo material: they protect nothing and are named in
+        # docs/security.md. If gitleaks ever flags one, extend .gitleaksignore with
+        # a pinpointed allow entry, never disable the scan.
+
+  codeql:
+    name: CodeQL (csharp)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+          # The SPA is JavaScript without server-side sinks; scanning C# covers the
+          # token, XML, and SQL surfaces where this repo's risk lives.
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:csharp"

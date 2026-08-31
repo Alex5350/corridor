@@ -139,3 +139,65 @@ jobs:
         run: >
           dotnet test tests/Corridor.IntegrationTests/Corridor.IntegrationTests.csproj
           --no-restore --nologo
+
+  api-regression:
+    name: api regression (newman)
+    needs: build-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: start db and apply scripts
+        run: bash scripts/test-db-only.sh
+      - name: boot services
+        env:
+          ConnectionStrings__Corridor: "Server=localhost,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True"
+        run: |
+          dotnet run --project src/Corridor.OktaSim --no-launch-profile &
+          dotnet run --project src/Corridor.AdfsSim --no-launch-profile &
+          dotnet run --project src/Corridor.Legacy --no-launch-profile &
+          dotnet run --project src/Corridor.Portal --no-launch-profile &
+          for i in $(seq 1 60); do
+            ok=1
+            for port in 8080 8090 8000 5200; do
+              curl -fsS "http://localhost:$port/healthz" >/dev/null 2>&1 || ok=0
+            done
+            [ "$ok" = 1 ] && break
+            sleep 2
+          done
+          [ "$ok" = 1 ] || { echo "services did not become healthy"; exit 1; }
+      - name: flip legacy to dual trust (documented collection prerequisite)
+        run: docker exec $(docker ps -qf name=db) /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P CorridorDev1! -d Corridor -Q "UPDATE idn.MigrationApps SET TrustMode='Dual' WHERE AppKey='legacy'"
+      - name: run the Postman collection
+        run: npx --yes newman run postman/Corridor.postman_collection.json -e postman/corridor-env.json --reporters cli
+      - name: stop services
+        if: always()
+        run: pkill -f "Corridor.(OktaSim|AdfsSim|Legacy|Portal)" || true
+
+  e2e:
+    name: end to end (playwright)
+    needs: build-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: install playwright chromium
+        run: npx --yes playwright@latest install --with-deps chromium
+      - name: install e2e dependencies
+        run: npm ci
+        working-directory: e2e
+      - name: install spa dependencies (dev server runs in the suite)
+        run: npm ci
+        working-directory: src/Corridor.Spa
+      - name: run the self-bootstrapping suite
+        run: npx playwright test
+        working-directory: e2e
