@@ -58,7 +58,7 @@ SOAP column, integration plus e2e cover the interactive columns.
 |---|---|---|---|
 | PermitPortal | SAML login via adfs-sim works; OIDC challenge not offered | Chooser shown; both providers sign in; both sessions reach protected pages | OIDC sign-in works; SAML ACS refuses with the "use Okta" message; bearer accepted on APIs |
 | TraceLink (SOAP) | SAML assertion accepted; JWT rejected `cor:InvalidIdentityMode` | Both kinds accepted; each validated by its own strategy | JWT accepted; SAML rejected `cor:InvalidIdentityMode`; bridge uses client credentials |
-| FieldInsight (SPA) | Not applicable (the SPA is a post-cutover client; it is simply not published) | Not applicable | PKCE login works; refresh rotation works; assignments PATCH works bearer-only |
+| FieldInsight (SPA) | Served at 5173 in every mode but always offers the Okta login (the SPA has no trust-mode gate: it exists as a post-cutover client, so in Adfs mode its login simply fails) | Not applicable | PKCE login works; refresh rotation works; assignments PATCH works bearer-only |
 
 Wrong-mode behavior is a first-class expectation, not an edge case: the
 `cor:InvalidIdentityMode` fault is asserted in `TokenValidatorModeGatingTests` and

@@ -4,6 +4,9 @@
 // Tool assumptions, adjust labels to your controller:
 //   tools { nodejs "node22" } for the SPA build (optional stage, commented)
 //   dotnet 10 SDK on PATH or a tool named net10 via the "dotnet" tool label.
+// Parity note: this pipeline runs restore, build, and unit tests. The GitHub
+// workflow additionally runs spa, artifacts, api-regression (newman), and e2e
+// jobs; this repo's canonical pipeline is .github/workflows/ci.yml.
 pipeline {
     agent any
 

@@ -2,7 +2,7 @@
  * Central integration endpoints for the FieldInsight SPA.
  *
  * Defaults match the Corridor demo topology: okta-sim on 8080 (the OIDC
- * authority), the portal API on 5000, and this dev server on 5173. Every value
+ * authority), the portal API on 5200, and this dev server on 5173. Every value
  * can be overridden with a VITE_ env var so the same build works against other
  * ports without touching code.
  */

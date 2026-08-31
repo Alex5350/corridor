@@ -6,9 +6,9 @@
  *
  * Outputs docs/screenshots/shot-*.png. The migration dashboard capture is a
  * Chromium render of two real captures stacked (the dashboard page above the
- * audit trail page): the portal is restarted in in-memory mode for that one
- * shot so the audit trail starts empty and shows only the mid-cutover events
- * driven through the real flip buttons.
+ * audit trail page), both against the SQL-backed portal: the audit trail is
+ * cleared first so it shows only the mid-cutover events driven through the
+ * real flip buttons.
  */
 
 import { mkdirSync } from "node:fs";
@@ -28,6 +28,7 @@ import {
   setTrustMode,
   resetTrustModesToAdfs,
   resetAssignmentChecklists,
+  resetAuditEvents,
   closePool,
 } from "../lib/sql.mjs";
 
@@ -67,41 +68,6 @@ async function portalSignIn(page, upn) {
     await page.getByRole("button", { name: "Sign in" }).click();
   }
   await page.locator(".header-session .who").waitFor();
-}
-
-/** Restarts the portal in in-memory mode on the same port (audit page works). */
-async function swapPortalToInMemory(state) {
-  const entry = state.started.find((candidate) => candidate.label === "Corridor.Portal");
-  if (entry?.pid) {
-    console.log("[shots] stopping the SQL-backed portal for the in-memory capture");
-    await killGroup(entry.pid);
-    state.started = state.started.filter((candidate) => candidate !== entry);
-  }
-  const projectPath = path.join(REPO_ROOT, "src", "Corridor.Portal");
-  const logPath = path.join(state.logDir, "Corridor.Portal-in-memory-5200.log");
-  const child = spawnGroup(
-    "dotnet",
-    ["run", "--project", projectPath, "--no-launch-profile"],
-    {
-      cwd: projectPath,
-      env: {
-        ...process.env,
-        ASPNETCORE_ENVIRONMENT: "Development",
-        ASPNETCORE_URLS: "http://localhost:5200",
-        Data__UseInMemory: "true",
-      },
-    },
-    logPath,
-  );
-  state.started.push({ label: "Corridor.Portal (in-memory)", kind: "dotnet", pid: child.pid, port: 5200 });
-  const deadline = Date.now() + 240_000;
-  while (Date.now() < deadline && !(await dotnetHealthy(5200))) {
-    await new Promise((resolve) => setTimeout(resolve, 750));
-  }
-  if (!(await dotnetHealthy(5200))) {
-    throw new Error("The in-memory portal did not become healthy in time.");
-  }
-  console.log("[shots] in-memory portal ready on 5200");
 }
 
 async function main() {
@@ -187,7 +153,7 @@ async function main() {
 
     // 6. Migration dashboard mid-cutover with the audit trail below. The
     // deliberate state: legacy flipped to Okta, portal to Dual, spa left Adfs.
-    await swapPortalToInMemory(state);
+    await resetAuditEvents();
     {
       const context = await newContext(browser);
       const page = await context.newPage();

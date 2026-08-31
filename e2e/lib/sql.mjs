@@ -143,6 +143,11 @@ export async function resetTrustModesToAdfs() {
   await setTrustMode("spa", "Adfs");
 }
 
+/** Clears the audit trail so captures show only the events this run drives. */
+export async function resetAuditEvents() {
+  await runSql("DELETE FROM idn.AuditEvents");
+}
+
 /** Restores the seeded checklist state (every item open) for clean captures. */
 export async function resetAssignmentChecklists() {
   const pool = await getPool();

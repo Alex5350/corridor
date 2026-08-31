@@ -64,7 +64,7 @@ The interface and the consoles, captured from the running stack:
 - **Rollback that costs one click.** Because trust mode lives in the database with an
   audit row per change, reversing a bad flip is another flip, not an emergency release.
 - **The SOAP service stays a SOAP service.** The riskiest legacy asset crosses to modern
-  identity with its WSDL contract untouched; its callers change nothing.
+  identity with its [WSDL](docs/GLOSSARY.md) contract untouched; its callers change nothing.
 - **Accounts that move with the migration.** [Provisioning](docs/GLOSSARY.md) via a
   standard API means users exist in the new provider, with the right roles, before their
   first modern login.
@@ -72,8 +72,9 @@ The interface and the consoles, captured from the running stack:
   inspection assignments is decided by readable policy files with a default-deny
   fallback, not code scattered across three apps.
 - **Evidence, not vibes, at every phase.** A committed Postman, SoapUI, and JMeter
-  regression suite re-runs against the same contracts between every phase, so each flip
-  is guarded by a green run anyone can reproduce.
+  [regression suite](docs/GLOSSARY.md) re-runs against the same contracts between every
+  phase, so each flip is guarded by a green run anyone can reproduce: the collection
+  itself runs in CI on every push.
 
 ## How the engineering solves it
 
@@ -145,6 +146,10 @@ dotnet run --project src/Corridor.Ops.Tool -- scim-dump --url http://localhost:8
 Day-one walkthrough with repo tour and demo script: [docs/onboarding.md](docs/onboarding.md).
 
 </details>
+
+*Scope note:* Oracle PL/SQL, SPML, and Tenable integration are deliberate omissions
+from this demo (the first two have no local simulator worth faking); the coverage story
+is what runs, not what is named.
 
 ## Documentation
 

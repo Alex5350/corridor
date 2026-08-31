@@ -2,6 +2,9 @@
 # integrate). Kept in parity with the GitHub workflow by choice; this repo
 # actually runs on GitHub Actions, so this file exists for parity and for
 # anyone importing the project into GitLab.
+# Parity note: this mirror runs the build, unit, and integration stages. The
+# GitHub workflow additionally runs the spa, artifacts, api-regression (newman),
+# and e2e jobs; this repo's canonical pipeline is .github/workflows/ci.yml.
 
 stages:
   - build
