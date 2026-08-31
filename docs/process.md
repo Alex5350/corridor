@@ -137,6 +137,53 @@ registry's registered redirect (`http://localhost:5200/signin-oidc` in
 contract, and `docs/onboarding.md` says so up front rather than letting the next person
 rediscover it through a bind error.
 
+## Story 6: the screenshot that looked fine to everyone
+
+**Symptom.** The FieldInsight screenshot in the README rendered as raw HTML: serif text,
+blue links, no cards. Reviewers had already looked at it; a fresh capture looked styled,
+so it read as a transient capture glitch. It was not.
+
+**Investigation.** Pixel-sampling the committed PNG settled it: the top band was white,
+so the navy header had never painted. The page content was rendered (live API data), so
+JavaScript had run. In Vite's dev server, CSS arrives as inline style elements injected
+by the same module graph, which pointed at the Content-Security-Policy: the dev policy
+relaxed `script-src` with `'unsafe-inline'` for the React fast-refresh preamble but not
+`style-src`, so the stylesheet was silently blocked on every development render while
+preview and production (real CSS files) looked fine. The e2e suite asserted behavior,
+never styling, which is why green runs kept shipping an unstyled page.
+
+**Fix.** `'unsafe-inline'` on `style-src` in the development policy only
+(`src/Corridor.Spa/vite.config.ts`), the capture script now waits for applied styles
+before shooting, and the affected screenshots were retaken.
+
+**Lesson.** Assert rendering with pixels, not opinions: a vision pass had called the
+broken shot styled. And a CSP you cannot see failing will fail where nobody looks; dev
+differs from prod in exactly the delivery mechanism (inline style elements) the policy
+governed.
+
+## Story 7: the signing key that died with the shortest test
+
+**Symptom.** CI-only, intermittent: a token mint returned a 500 whose body was text, not
+JSON. Locally nothing reproduced: macOS, a Linux container, the same filter, all green.
+
+**Investigation.** The breakthrough was making it deterministic instead of chasing
+probability: throttling a container to 0.6 CPUs reproduced it four runs out of four, and
+instrumenting the failing exchange printed the real exception,
+`ObjectDisposedException: RSAOpenSsl.TrySignHash`. Every test class boots its own
+in-memory host, but all of them load the SAME committed signing PEM, and the token
+handler's shared crypto provider cache binds its signature providers to the first loaded
+RSA. When the shortest-running class finished and its host disposed that key, every later
+token mint across the other parallel hosts died.
+
+**Fix.** Process-lifetime singletons do not dispose their signing keys
+(`src/Corridor.OktaSim/Services/SigningKeys.cs`): `Dispose` is a documented no-op, which
+is also the correct production lifetime for keys loaded once at startup.
+
+**Lesson.** "Flaky on slower hardware" is a race you have not confined yet; constrain
+the CPU and the race stops flirting. And DI disposal is a real trust boundary: disposing
+a singleton's resources from one host can break another host's cached handles to the
+same key material.
+
 ## Deliberate choices worth defending
 
 - **Simulating both providers instead of needing tenants** ([ADR 0001](adr/0001-simulate-both-providers-locally.md)).

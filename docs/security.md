@@ -22,8 +22,10 @@ Named honestly, so nobody copies the wrong half:
   HSTS, and secure cookie flags are out of scope for a local simulation. The OIDC and
   bearer handlers therefore set `RequireHttpsMetadata = false` (marked in
   `src/Corridor.Portal/Program.cs`), which is correct only for local sims.
-- **No rate limits, no lockouts**: the login forms and token endpoints do not throttle.
-  Production wraps them in rate limiting, lockout, and monitoring.
+- **Rate limiting is present but coarse**: okta-sim throttles the authorize and token
+  endpoints with a per-IP fixed window (60 per minute; 429 responses). adfs-sim's login
+  form does not throttle and nothing implements lockout or monitoring: production wraps
+  all credential surfaces in smarter limits plus lockout.
 - **Committed dev certificates** under `certs/` sign synthetic tokens and protect
   nothing (`certs/README.md`).
 - **Bearer-token-in-error-detail style conveniences**: the SCIM 401 names its demo token
