@@ -2,24 +2,66 @@
   "info": {
     "_postman_id": "b7c2f8d1-4a6e-4f2b-9c3d-corridor01",
     "name": "Corridor",
-    "description": "Corridor ADFS to Okta migration demo: API smoke and flow suite against the local simulation services (okta-sim 8080, portal 5200, legacy TraceLink 8000). Synthetic data only; every secret here is a documented demo constant. Run order inside each folder is numbered; the OIDC folder must run first because it captures {{accessToken}} and {{jwt}} for the other folders.",
+    "description": "Corridor ADFS to Okta migration demo: API smoke and flow suite against the local simulation services (okta-sim 8080, portal 5200, legacy TraceLink 8000). Synthetic data only; every secret here is a documented demo constant. Run order inside each folder is numbered; the OIDC folder must run first because it captures {{accessToken}} and {{jwt}} for the other folders. Prerequisite for the SOAP folder: the legacy service must be in Dual or Okta trust mode (the seeded default Adfs correctly rejects JWTs with cor:InvalidIdentityMode); see postman/README.md for the one-line SQL flip.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl-okta", "value": "http://localhost:8080" },
-    { "key": "baseUrl-portal", "value": "http://localhost:5200" },
-    { "key": "baseUrl-legacy", "value": "http://localhost:8000" },
-    { "key": "scimToken", "value": "corridor-scim-token" },
-    { "key": "demoUser", "value": "inspector@corridor.example" },
-    { "key": "demoPassword", "value": "Demo1234!" },
-    { "key": "codeVerifier", "value": "" },
-    { "key": "codeChallenge", "value": "" },
-    { "key": "code", "value": "" },
-    { "key": "accessToken", "value": "" },
-    { "key": "jwt", "value": "" },
-    { "key": "scimUserId", "value": "" },
-    { "key": "scimUserName", "value": "" },
-    { "key": "caseNumber", "value": "" }
+    {
+      "key": "baseUrl-okta",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "baseUrl-portal",
+      "value": "http://localhost:5200"
+    },
+    {
+      "key": "baseUrl-legacy",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "scimToken",
+      "value": "corridor-scim-token"
+    },
+    {
+      "key": "demoUser",
+      "value": "inspector@corridor.example"
+    },
+    {
+      "key": "demoPassword",
+      "value": "Demo1234!"
+    },
+    {
+      "key": "codeVerifier",
+      "value": ""
+    },
+    {
+      "key": "codeChallenge",
+      "value": ""
+    },
+    {
+      "key": "code",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "jwt",
+      "value": ""
+    },
+    {
+      "key": "scimUserId",
+      "value": ""
+    },
+    {
+      "key": "scimUserName",
+      "value": ""
+    },
+    {
+      "key": "caseNumber",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -48,8 +90,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl-okta}}/healthz",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["healthz"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "healthz"
+              ]
             },
             "description": "okta-sim liveness."
           },
@@ -76,9 +122,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8090/healthz",
-              "host": ["http://localhost:8090"],
-              "path": ["healthz"]
+              "raw": "{{baseUrl-adfs}}/healthz",
+              "host": [
+                "{{baseUrl-adfs}}"
+              ],
+              "path": [
+                "healthz"
+              ]
             },
             "description": "adfs-sim liveness."
           },
@@ -106,8 +156,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl-legacy}}/healthz",
-              "host": ["{{baseUrl-legacy}}"],
-              "path": ["healthz"]
+              "host": [
+                "{{baseUrl-legacy}}"
+              ],
+              "path": [
+                "healthz"
+              ]
             },
             "description": "Legacy SOAP service liveness."
           },
@@ -135,8 +189,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl-portal}}/healthz",
-              "host": ["{{baseUrl-portal}}"],
-              "path": ["healthz"]
+              "host": [
+                "{{baseUrl-portal}}"
+              ],
+              "path": [
+                "healthz"
+              ]
             },
             "description": "PermitPortal liveness."
           },
@@ -187,8 +245,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl-okta}}/healthz",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["healthz"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "healthz"
+              ]
             },
             "description": "Warm-up request whose test script computes and stores the PKCE pair used by request 1 and 2."
           },
@@ -239,24 +301,66 @@
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
-                { "key": "client_id", "value": "spa", "type": "text" },
-                { "key": "redirect_uri", "value": "http://localhost:5173/callback", "type": "text" },
-                { "key": "response_type", "value": "code", "type": "text" },
-                { "key": "scope", "value": "openid profile email", "type": "text" },
-                { "key": "state", "value": "{{oidcState}}", "type": "text" },
-                { "key": "code_challenge", "value": "{{codeChallenge}}", "type": "text" },
-                { "key": "code_challenge_method", "value": "S256", "type": "text" },
-                { "key": "username", "value": "{{demoUser}}", "type": "text" },
-                { "key": "password", "value": "{{demoPassword}}", "type": "text" }
+                {
+                  "key": "client_id",
+                  "value": "spa",
+                  "type": "text"
+                },
+                {
+                  "key": "redirect_uri",
+                  "value": "http://localhost:5173/callback",
+                  "type": "text"
+                },
+                {
+                  "key": "response_type",
+                  "value": "code",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "openid profile email",
+                  "type": "text"
+                },
+                {
+                  "key": "state",
+                  "value": "{{oidcState}}",
+                  "type": "text"
+                },
+                {
+                  "key": "code_challenge",
+                  "value": "{{codeChallenge}}",
+                  "type": "text"
+                },
+                {
+                  "key": "code_challenge_method",
+                  "value": "S256",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{demoUser}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{demoPassword}}",
+                  "type": "text"
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl-okta}}/authorize",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["authorize"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "authorize"
+              ]
             },
             "description": "Submits the demo credentials straight to the okta-sim authorize endpoint with the PKCE challenge, the same fields the rendered login form would post.",
-            "protocolProfileBehavior": { "followRedirects": false }
+            "protocolProfileBehavior": {
+              "followRedirects": false
+            }
           },
           "response": []
         },
@@ -294,17 +398,41 @@
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
-                { "key": "grant_type", "value": "authorization_code", "type": "text" },
-                { "key": "code", "value": "{{code}}", "type": "text" },
-                { "key": "redirect_uri", "value": "http://localhost:5173/callback", "type": "text" },
-                { "key": "code_verifier", "value": "{{codeVerifier}}", "type": "text" },
-                { "key": "client_id", "value": "spa", "type": "text" }
+                {
+                  "key": "grant_type",
+                  "value": "authorization_code",
+                  "type": "text"
+                },
+                {
+                  "key": "code",
+                  "value": "{{code}}",
+                  "type": "text"
+                },
+                {
+                  "key": "redirect_uri",
+                  "value": "http://localhost:5173/callback",
+                  "type": "text"
+                },
+                {
+                  "key": "code_verifier",
+                  "value": "{{codeVerifier}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "spa",
+                  "type": "text"
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl-okta}}/token",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["token"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "token"
+              ]
             },
             "description": "Public client exchange: no secret, the PKCE verifier proves the same browser session."
           },
@@ -336,20 +464,36 @@
             "auth": {
               "type": "basic",
               "basic": [
-                { "key": "username", "value": "legacy", "type": "string" },
-                { "key": "password", "value": "corridor-legacy-secret", "type": "string" }
+                {
+                  "key": "username",
+                  "value": "legacy",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "corridor-legacy-secret",
+                  "type": "string"
+                }
               ]
             },
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
-                { "key": "grant_type", "value": "client_credentials", "type": "text" }
+                {
+                  "key": "grant_type",
+                  "value": "client_credentials",
+                  "type": "text"
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl-okta}}/token",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["token"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "token"
+              ]
             },
             "description": "The legacy client's service JWT. Stored as {{jwt}} and replayed in the cor:Security header by the SOAP folder. Requires the legacy app in Dual or Okta trust mode."
           },
@@ -379,13 +523,21 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl-okta}}/userinfo",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["userinfo"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "userinfo"
+              ]
             },
             "description": "Bearer-protected userinfo resolves the SCIM directory entry."
           },
@@ -421,14 +573,27 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{scimToken}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{scimToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl-okta}}/scim/v2/Users?filter=userName%20eq%20%22admin%40corridor.example%22",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["scim", "v2", "Users"],
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "scim",
+                "v2",
+                "Users"
+              ],
               "query": [
-                { "key": "filter", "value": "userName%20eq%20%22admin%40corridor.example%22" }
+                {
+                  "key": "filter",
+                  "value": "userName%20eq%20%22admin%40corridor.example%22"
+                }
               ]
             },
             "description": "RFC 7644 filtered list; only the userName eq form is supported."
@@ -470,18 +635,36 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{scimToken}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/scim+json", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{scimToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/scim+json",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:schemas:core:2.0:User\"],\n  \"userName\": \"{{scimUserName}}\",\n  \"displayName\": \"Postman Provisioned\",\n  \"active\": true,\n  \"groups\": [{ \"display\": \"trace-reviewers\" }]\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-okta}}/scim/v2/Users",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["scim", "v2", "Users"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "scim",
+                "v2",
+                "Users"
+              ]
             },
             "description": "Creates a synthetic user with a unique userName so the request is re-runnable."
           },
@@ -511,12 +694,23 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{scimToken}}", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{scimToken}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl-okta}}/scim/v2/Users/{{scimUserId}}",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["scim", "v2", "Users", "{{scimUserId}}"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "scim",
+                "v2",
+                "Users",
+                "{{scimUserId}}"
+              ]
             },
             "description": "Fetches the user created by the previous request."
           },
@@ -545,18 +739,37 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{scimToken}}", "type": "text" },
-              { "key": "Content-Type", "value": "application/scim+json", "type": "text" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{scimToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/scim+json",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"schemas\": [\"urn:ietf:params:scim:api:messages:2.0:PatchOp\"],\n  \"Operations\": [\n    { \"op\": \"replace\", \"path\": \"active\", \"value\": false }\n  ]\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-okta}}/scim/v2/Users/{{scimUserId}}",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["scim", "v2", "Users", "{{scimUserId}}"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "scim",
+                "v2",
+                "Users",
+                "{{scimUserId}}"
+              ]
             },
             "description": "Only replace ops on active and groups are supported by the simulated directory."
           },
@@ -588,8 +801,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl-okta}}/scim/v2/Users",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["scim", "v2", "Users"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "scim",
+                "v2",
+                "Users"
+              ]
             },
             "description": "Negative path: no Authorization header."
           },
@@ -622,17 +841,30 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/xacml+xml", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/xacml+xml",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Request xmlns=\"urn:oasis:names:tc:xacml:2.0:context:schema:os\">\n  <Subject>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:2.0:subject:role\">\n      <AttributeValue>Officer</AttributeValue>\n    </Attribute>\n  </Subject>\n  <Resource>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n      <AttributeValue>trace-cases</AttributeValue>\n    </Attribute>\n  </Resource>\n  <Action>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\">\n      <AttributeValue>read</AttributeValue>\n    </Attribute>\n  </Action>\n</Request>",
-              "options": { "raw": { "language": "xml" } }
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-okta}}/pdp/decide",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["pdp", "decide"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "pdp",
+                "decide"
+              ]
             },
             "description": "Policy 10-trace-read-officers-admins.xacml.xml."
           },
@@ -659,17 +891,30 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/xacml+xml", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/xacml+xml",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Request xmlns=\"urn:oasis:names:tc:xacml:2.0:context:schema:os\">\n  <Subject>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:2.0:subject:role\">\n      <AttributeValue>Inspector</AttributeValue>\n    </Attribute>\n  </Subject>\n  <Resource>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n      <AttributeValue>assignments</AttributeValue>\n    </Attribute>\n  </Resource>\n  <Action>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\">\n      <AttributeValue>write</AttributeValue>\n    </Attribute>\n  </Action>\n</Request>",
-              "options": { "raw": { "language": "xml" } }
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-okta}}/pdp/decide",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["pdp", "decide"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "pdp",
+                "decide"
+              ]
             },
             "description": "Policy 20-assignments-write-inspectors.xacml.xml."
           },
@@ -696,17 +941,30 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/xacml+xml", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/xacml+xml",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Request xmlns=\"urn:oasis:names:tc:xacml:2.0:context:schema:os\">\n  <Subject>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:2.0:subject:role\">\n      <AttributeValue>Clerk</AttributeValue>\n    </Attribute>\n  </Subject>\n  <Resource>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:resource:resource-id\">\n      <AttributeValue>trace-cases</AttributeValue>\n    </Attribute>\n  </Resource>\n  <Action>\n    <Attribute AttributeId=\"urn:oasis:names:tc:xacml:1.0:action:action-id\">\n      <AttributeValue>read</AttributeValue>\n    </Attribute>\n  </Action>\n</Request>",
-              "options": { "raw": { "language": "xml" } }
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-okta}}/pdp/decide",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["pdp", "decide"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "pdp",
+                "decide"
+              ]
             },
             "description": "No permit rule matches a Clerk, so policy 90-deny-all decides."
           },
@@ -735,17 +993,30 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/xacml+xml", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/xacml+xml",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "this is not an xacml request",
-              "options": { "raw": { "language": "text" } }
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-okta}}/pdp/decide",
-              "host": ["{{baseUrl-okta}}"],
-              "path": ["pdp", "decide"]
+              "host": [
+                "{{baseUrl-okta}}"
+              ],
+              "path": [
+                "pdp",
+                "decide"
+              ]
             },
             "description": "Error discipline: malformed input still gets a real XACML Response document."
           },
@@ -778,23 +1049,40 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
               ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"licenseeName\": \"Postman Bridge Firearms\",\n  \"itemDescription\": \"Merrin M-12 shotgun 12ga\",\n  \"serial\": \"PM-00441172\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-portal}}/api/cases",
-              "host": ["{{baseUrl-portal}}"],
-              "path": ["api", "cases"]
+              "host": [
+                "{{baseUrl-portal}}"
+              ],
+              "path": [
+                "api",
+                "cases"
+              ]
             },
             "description": "The portal relays this to the legacy SOAP CreateTraceRequest with its own service credential."
           },
@@ -825,13 +1113,23 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl-portal}}/api/cases/{{caseNumber}}",
-              "host": ["{{baseUrl-portal}}"],
-              "path": ["api", "cases", "{{caseNumber}}"]
+              "host": [
+                "{{baseUrl-portal}}"
+              ],
+              "path": [
+                "api",
+                "cases",
+                "{{caseNumber}}"
+              ]
             },
             "description": "Reads back the case created by the previous request."
           },
@@ -862,23 +1160,40 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
             ],
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
               ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"licenseeName\": \"only a licensee\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-portal}}/api/cases",
-              "host": ["{{baseUrl-portal}}"],
-              "path": ["api", "cases"]
+              "host": [
+                "{{baseUrl-portal}}"
+              ],
+              "path": [
+                "api",
+                "cases"
+              ]
             },
             "description": "Missing itemDescription and serial must come back as a problem document, not a stack trace."
           },
@@ -911,13 +1226,23 @@
             "auth": {
               "type": "bearer",
               "bearer": [
-                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl-portal}}/api/cases/TRC-999999",
-              "host": ["{{baseUrl-portal}}"],
-              "path": ["api", "cases", "TRC-999999"]
+              "host": [
+                "{{baseUrl-portal}}"
+              ],
+              "path": [
+                "api",
+                "cases",
+                "TRC-999999"
+              ]
             },
             "description": "The SOAP CaseNotFound subcode maps onto a 404 problem document."
           },
@@ -957,18 +1282,34 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "text/xml; charset=utf-8", "type": "text" },
-              { "key": "SOAPAction", "value": "\"http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases\"", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8",
+                "type": "text"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases\"",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <soap:Header>\n    <cor:Security xmlns:cor=\"http://corridor.example/security\">\n      <jwt>{{jwt}}</jwt>\n    </cor:Security>\n  </soap:Header>\n  <soap:Body>\n    <SearchCases xmlns=\"http://corridor.example/tracelink/2026/08\">\n      <requester>postman@corridor.example</requester>\n      <statusFilter></statusFilter>\n      <maxRows>10</maxRows>\n    </SearchCases>\n  </soap:Body>\n</soap:Envelope>",
-              "options": { "raw": { "language": "xml" } }
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-legacy}}/TraceLink.svc",
-              "host": ["{{baseUrl-legacy}}"],
-              "path": ["TraceLink.svc"]
+              "host": [
+                "{{baseUrl-legacy}}"
+              ],
+              "path": [
+                "TraceLink.svc"
+              ]
             },
             "description": "Hand-built envelope, the same wire profile SoapUI uses in the committed project file."
           },
@@ -998,18 +1339,34 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "text/xml; charset=utf-8", "type": "text" },
-              { "key": "SOAPAction", "value": "\"http://corridor.example/tracelink/2026/08/TraceLinkService/GetCase\"", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8",
+                "type": "text"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"http://corridor.example/tracelink/2026/08/TraceLinkService/GetCase\"",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <soap:Header>\n    <cor:Security xmlns:cor=\"http://corridor.example/security\">\n      <jwt>{{jwt}}</jwt>\n    </cor:Security>\n  </soap:Header>\n  <soap:Body>\n    <GetCase xmlns=\"http://corridor.example/tracelink/2026/08\">\n      <caseNumber>{{caseNumber}}</caseNumber>\n    </GetCase>\n  </soap:Body>\n</soap:Envelope>",
-              "options": { "raw": { "language": "xml" } }
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-legacy}}/TraceLink.svc",
-              "host": ["{{baseUrl-legacy}}"],
-              "path": ["TraceLink.svc"]
+              "host": [
+                "{{baseUrl-legacy}}"
+              ],
+              "path": [
+                "TraceLink.svc"
+              ]
             },
             "description": "Fetches the case created through the portal bridge folder."
           },
@@ -1035,18 +1392,34 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "text/xml; charset=utf-8", "type": "text" },
-              { "key": "SOAPAction", "value": "\"http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases\"", "type": "text" }
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8",
+                "type": "text"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"http://corridor.example/tracelink/2026/08/TraceLinkService/SearchCases\"",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <soap:Header>\n    <cor:Security xmlns:cor=\"http://corridor.example/security\">\n      <jwt>not.a.jwt</jwt>\n    </cor:Security>\n  </soap:Header>\n  <soap:Body>\n    <SearchCases xmlns=\"http://corridor.example/tracelink/2026/08\">\n      <requester>postman@corridor.example</requester>\n      <statusFilter></statusFilter>\n      <maxRows>10</maxRows>\n    </SearchCases>\n  </soap:Body>\n</soap:Envelope>",
-              "options": { "raw": { "language": "xml" } }
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl-legacy}}/TraceLink.svc",
-              "host": ["{{baseUrl-legacy}}"],
-              "path": ["TraceLink.svc"]
+              "host": [
+                "{{baseUrl-legacy}}"
+              ],
+              "path": [
+                "TraceLink.svc"
+              ]
             },
             "description": "The JWT fails signature validation, so the dispatch inspector raises cor:InvalidToken."
           },
