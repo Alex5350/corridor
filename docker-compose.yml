@@ -171,10 +171,10 @@ services:
       # reach okta-sim on the published port; the oktasim-shim service below
       # makes that same URL work for this container's back-channel calls.
       Okta__ClientSecret: "corridor-portal-secret"
-    # macOS note: AirPlay Receiver listens on host port 5200 by default. Either
-    # disable it (System Settings > General > AirDrop & Handoff) or run the
-    # stack with PORTAL_PORT=5500 (the demo contract port stays 5200 inside
-    # the container network and in every service's configuration).
+    # macOS note: the portal publishes on 5200 because AirPlay Receiver holds
+    # host port 5000 by default (System Settings > General > AirDrop & Handoff).
+    # Override with PORTAL_PORT only if something else claims 5200; the port
+    # stays 5200 inside the container network and in every service's config.
     ports:
       - "${PORTAL_PORT:-5200}:5200"
     depends_on:
