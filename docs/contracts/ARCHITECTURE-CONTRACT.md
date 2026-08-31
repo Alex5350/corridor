@@ -49,11 +49,11 @@ OIDC:
 - GET /userinfo (Bearer)
 - GET /logout (post_logout_redirect_uri)
 Registered clients (in-memory seed from db): portal (confidential, secret
-corridor-portal-secret, redirect http://localhost:5000/signin-oidc), spa (public, redirect
+corridor-portal-secret, redirect http://localhost:5200/signin-oidc), spa (public, redirect
 http://localhost:5173/callback, PKCE required), legacy (confidential, secret
 corridor-legacy-secret, no redirect: client-credentials for service tokens).
 SAML IdP mode (for portal dual-trust): GET /saml/metadata, POST /saml/sso issuing signed
-assertions to the portal's ACS http://localhost:5000/saml/acs.
+assertions to the portal's ACS http://localhost:5200/saml/acs.
 SCIM 2.0: /scim/v2/Users GET (list, filter by userName eq), POST, GET {id}, PUT, PATCH
 (only replace-op on active and groups). Bearer token: corridor-scim-token.
 XACML PDP: POST /pdp/decide: request body is an XACML 2.0/3.0 <Request> XML document;
@@ -177,7 +177,7 @@ UnderReview->Rejected. Closed/Rejected terminal.
 
 ## Conventions (portfolio-wide, non-negotiable)
 
-- NO em-dashes (—) or en-dashes (–) in ANY file (code comments included). Use commas,
+- NO em-dashes or en-dashes in ANY file (code comments included). Use commas,
   colons, semicolons, parentheses, or " - ".
 - No real secrets, no real agency data, synthetic everything; disclaimers in README.
 - No AI-assistant instruction files (no AGENTS.md/CLAUDE.md) anywhere.
