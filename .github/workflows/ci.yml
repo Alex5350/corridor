@@ -156,10 +156,10 @@ jobs:
         env:
           ConnectionStrings__Corridor: "Server=localhost,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True"
         run: |
-          dotnet run --project src/Corridor.OktaSim --no-launch-profile &
-          dotnet run --project src/Corridor.AdfsSim --no-launch-profile &
-          dotnet run --project src/Corridor.Legacy --no-launch-profile &
-          dotnet run --project src/Corridor.Portal --no-launch-profile &
+          ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:8080 dotnet run --project src/Corridor.OktaSim --no-launch-profile &
+          ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:8090 dotnet run --project src/Corridor.AdfsSim --no-launch-profile &
+          ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:8000 dotnet run --project src/Corridor.Legacy --no-launch-profile &
+          ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5200 dotnet run --project src/Corridor.Portal --no-launch-profile &
           for i in $(seq 1 60); do
             ok=1
             for port in 8080 8090 8000 5200; do
@@ -170,7 +170,13 @@ jobs:
           done
           [ "$ok" = 1 ] || { echo "services did not become healthy"; exit 1; }
       - name: flip legacy to dual trust (documented collection prerequisite)
-        run: docker exec $(docker ps -qf name=db) /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P CorridorDev1! -d Corridor -Q "UPDATE idn.MigrationApps SET TrustMode='Dual' WHERE AppKey='legacy'"
+        # azure-sql-edge ships no sqlcmd: run it from the full server image on the
+        # compose network, same trick the db-init sidecar uses.
+        run: >
+          docker run --rm --network $(docker network ls --format '{{.Name}}' | grep corridor | head -1)
+          mcr.microsoft.com/mssql/server:2022-latest
+          /opt/mssql-tools18/bin/sqlcmd -C -S db -U sa -P CorridorDev1! -d Corridor
+          -Q "UPDATE idn.MigrationApps SET TrustMode='Dual' WHERE AppKey='legacy'"
       - name: run the Postman collection
         run: npx --yes newman run postman/Corridor.postman_collection.json -e postman/corridor-env.json --reporters cli
       - name: stop services

@@ -24,7 +24,7 @@
     },
     {
       "key": "demoUser",
-      "value": "inspector@corridor.example"
+      "value": "officer@corridor.example"
     },
     {
       "key": "demoPassword",
@@ -214,27 +214,23 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// Generate the verifier now; the challenge is derived with the WebCrypto",
-                  "// API (crypto.subtle) because the sandbox exposes it and it keeps the",
-                  "// collection free of crypto libraries.",
+                  "// Generate the verifier and its S256 challenge synchronously. The sandbox",
+                  "// exposes CryptoJS but neither WebCrypto nor require('crypto'), so the",
+                  "// verifier's randomness comes from Math.random: demo-grade on purpose (the",
+                  "// provider still enforces S256 matching and single-use codes), while the",
+                  "// challenge derivation is the real algorithm.",
                   "const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';",
-                  "const randomValues = new Uint32Array(64);",
-                  "crypto.getRandomValues(randomValues);",
                   "let verifier = '';",
-                  "for (let i = 0; i < randomValues.length; i++) {",
-                  "    verifier += chars.charAt(randomValues[i] % chars.length);",
+                  "for (let i = 0; i < 64; i++) {",
+                  "    verifier += chars.charAt(Math.floor(Math.random() * chars.length));",
                   "}",
+                  "const challenge = CryptoJS.SHA256(verifier).toString(CryptoJS.enc.Base64)",
+                  "    .replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
                   "pm.collectionVariables.set('codeVerifier', verifier);",
-                  "(async () => {",
-                  "    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));",
-                  "    const bytes = new Uint8Array(digest);",
-                  "    let binary = '';",
-                  "    bytes.forEach((b) => { binary += String.fromCharCode(b); });",
-                  "    const challenge = btoa(binary).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
-                  "    pm.collectionVariables.set('codeChallenge', challenge);",
-                  "})();",
-                  "pm.test('PKCE verifier stored for the next request', () => {",
+                  "pm.collectionVariables.set('codeChallenge', challenge);",
+                  "pm.test('PKCE pair stored for the next request', () => {",
                   "    pm.expect(pm.collectionVariables.get('codeVerifier')).to.be.a('string').and.not.empty;",
+                  "    pm.expect(pm.collectionVariables.get('codeChallenge')).to.be.a('string').and.not.empty;",
                   "});"
                 ]
               }
@@ -271,26 +267,16 @@
             {
               "listen": "test",
               "script": {
-                "type": "text/javascript",
                 "exec": [
-                  "// okta-sim answers the login POST with a 302 whose Location carries the code.",
-                  "pm.test('login redirected', () => pm.response.to.have.status(302));",
-                  "const location = pm.response.headers.get('Location') || '';",
-                  "pm.test('redirect targets the SPA callback', () => {",
-                  "    pm.expect(location).to.contain('http://localhost:5173/callback');",
+                  "// The login POST answers 302; runners follow it by default, and the",
+                  "// registered playback target echoes the exact query it received.",
+                  "pm.test('redirect landed on the playback target', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    const received = pm.response.json().received;",
+                  "    pm.expect(received.state).to.eql(pm.collectionVariables.get('oidcState'));",
+                  "    pm.expect(received.code).to.be.a('string').and.not.empty;",
                   "});",
-                  "const params = {};",
-                  "location.split('?')[1].split('&').forEach((pair) => {",
-                  "    const parts = pair.split('=');",
-                  "    params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1] || '');",
-                  "});",
-                  "pm.test('authorization code captured', () => {",
-                  "    pm.expect(params.code).to.be.a('string').and.not.empty;",
-                  "});",
-                  "pm.test('state round trips', () => {",
-                  "    pm.expect(params.state).to.eql(pm.collectionVariables.get('oidcState'));",
-                  "});",
-                  "pm.collectionVariables.set('code', params.code);"
+                  "pm.collectionVariables.set('code', pm.response.json().received.code);"
                 ]
               }
             }
@@ -308,7 +294,7 @@
                 },
                 {
                   "key": "redirect_uri",
-                  "value": "http://localhost:5173/callback",
+                  "value": "{{baseUrl-okta}}/playback",
                   "type": "text"
                 },
                 {
@@ -357,10 +343,7 @@
                 "authorize"
               ]
             },
-            "description": "Submits the demo credentials straight to the okta-sim authorize endpoint with the PKCE challenge, the same fields the rendered login form would post.",
-            "protocolProfileBehavior": {
-              "followRedirects": false
-            }
+            "description": "Submits the demo credentials straight to the okta-sim authorize endpoint with the PKCE challenge, the same fields the rendered login form would post."
           },
           "response": []
         },
@@ -410,7 +393,7 @@
                 },
                 {
                   "key": "redirect_uri",
-                  "value": "http://localhost:5173/callback",
+                  "value": "{{baseUrl-okta}}/playback",
                   "type": "text"
                 },
                 {

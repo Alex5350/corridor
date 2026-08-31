@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Nodes;
 
 namespace Corridor.OktaSim.Tests;
 
@@ -105,5 +106,24 @@ public class CorsTests(OktaSimFactory factory) : IClassFixture<OktaSimFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, pdpResponse.StatusCode);
         Assert.False(pdpResponse.Headers.Contains("Access-Control-Allow-Origin"),
             "the PDP is a server-to-server API and must stay CORS-free");
+    }
+}
+
+public class PlaybackTests(OktaSimFactory factory) : IClassFixture<OktaSimFactory>
+{
+    [Fact]
+    public async Task Playback_Echoes_The_Query_It_Received()
+    {
+        var client = factory.CreateNoRedirectClient();
+
+        var response = await client.GetAsync(
+            "/playback?code=abc-123&state=pm-s7a7e7&iss=http%3A%2F%2Flocalhost%3A8080");
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        var received = JsonNode.Parse(body)!["received"]!;
+        Assert.Equal("abc-123", received["code"]!.GetValue<string>());
+        Assert.Equal("pm-s7a7e7", received["state"]!.GetValue<string>());
+        Assert.Equal("http://localhost:8080", received["iss"]!.GetValue<string>());
     }
 }

@@ -68,7 +68,7 @@ public sealed class ClientRegistry
             ClientSecret: null,
             IsPublic: true,
             RequirePkce: true,
-            RedirectUris: ["http://localhost:5173/callback"],
+            RedirectUris: ["http://localhost:5173/callback", "http://localhost:8080/playback"],
             PostLogoutRedirectUris: ["http://localhost:5173/"],
             AllowedScopes: ["openid", "profile", "email", "offline_access"],
             AllowedGrants: ["authorization_code", "refresh_token"],

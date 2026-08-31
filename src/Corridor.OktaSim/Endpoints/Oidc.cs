@@ -71,6 +71,14 @@ public static class OidcEndpoints
             return Results.Json(body);
         }).RequireCors(SpaCorsPolicy);
 
+        app.MapGet("/playback", (HttpRequest request) =>
+        {
+            // Deterministic redirect target for scripted clients (newman, curl): echoes
+            // the exact query it received so the authorization code and state can be
+            // asserted from a followed redirect, which runners follow by default.
+            var received = request.Query.ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
+            return Results.Json(new Dictionary<string, object> { ["received"] = received });
+        }).RequireCors(SpaCorsPolicy);
         app.MapGet("/userinfo", GetUserinfoAsync).RequireCors(SpaCorsPolicy);
 
         app.MapGet("/logout", (HttpRequest request, ClientRegistry clients) =>
