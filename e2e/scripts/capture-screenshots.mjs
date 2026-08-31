@@ -6,9 +6,9 @@
  *
  * Outputs docs/screenshots/shot-*.png. The migration dashboard capture is a
  * Chromium render of two real captures stacked (the dashboard page above the
- * audit trail page): the audit page only renders in the in-memory build (see
- * e2e/README.md), so the portal is restarted in that mode for that one shot,
- * with the mid-cutover state driven through the real flip buttons.
+ * audit trail page): the portal is restarted in in-memory mode for that one
+ * shot so the audit trail starts empty and shows only the mid-cutover events
+ * driven through the real flip buttons.
  */
 
 import { mkdirSync } from "node:fs";
@@ -30,7 +30,6 @@ import {
   resetAssignmentChecklists,
   closePool,
 } from "../lib/sql.mjs";
-import { allowOktaCrossOrigin } from "../lib/cors-shim.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.resolve(here, "..", "..", "docs", "screenshots");
@@ -163,10 +162,11 @@ async function main() {
     }
     await officerContext.close();
 
-    // 5. SPA assignments as the inspector (fresh checklists, CORS shim on).
+    // 5. SPA assignments as the inspector (fresh checklists). okta-sim's OIDC
+    // endpoints carry the real "spa" CORS policy, so the browser flow needs
+    // no shim here either.
     {
       const context = await newContext(browser);
-      await allowOktaCrossOrigin(context);
       const page = await context.newPage();
       await page.goto("http://localhost:5173/");
       await page.locator("#login-hint").waitFor();

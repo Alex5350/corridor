@@ -64,12 +64,17 @@ test.describe("Admin migration dashboard", () => {
   test("the audit trail records the TrustModeChanged events for legacy", async ({ page }) => {
     await signInViaAdfs(page, USERS.admin);
 
-    // Known defect, documented in e2e/README.md: the Admin > Audit page 500s in
-    // the SQL-backed build (SqlAuditEventRepository reads the INT Id column
-    // with GetInt64), so the spec asserts the idn.AuditEvents rows directly:
-    // exactly the rows that page renders, written by the flips this spec drove
-    // through the dashboard buttons (checked against the pre-flip audit Id so
-    // reruns cannot lean on stale rows).
+    // The Admin > Audit page renders the SQL-backed audit trail; the spec
+    // asserts the page and, below, the exact idn.AuditEvents rows it renders,
+    // written by the flips this spec drove through the dashboard buttons
+    // (checked against the pre-flip audit Id so reruns cannot lean on stale
+    // rows).
+    await page.locator("nav.site-nav").getByRole("link", { name: "Audit" }).click();
+    await expect(page.getByRole("heading", { name: "Audit trail" })).toBeVisible();
+    await expect(
+      page.locator("tbody tr", { hasText: "TrustModeChanged" }).first(),
+    ).toBeVisible();
+
     const events = (await recentAuditEvents(200))
       .filter((event) => event.id > auditIdBeforeFlips);
     const legacyFlips = events.filter(
@@ -79,9 +84,6 @@ test.describe("Admin migration dashboard", () => {
     for (const flip of legacyFlips) {
       expect(flip.actor).toBe(USERS.admin);
     }
-
-    // The audit trail stays admin-only, same as the dashboard.
-    await expect(page.locator("nav.site-nav").getByRole("link", { name: "Audit" })).toBeVisible();
   });
 
   test("non-admins never see the dashboard", async ({ page }) => {

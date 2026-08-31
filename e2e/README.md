@@ -79,25 +79,25 @@ alone; the order below is just the narrative order:
    progress rings and status pills, a toggled checklist item persists across a
    reload, and the profile card shows the okta-sim claims.
 
-## Known upstream gaps the suite works around
+## Browser realism: no shims
 
-Both are defects in `src/` (out of the e2e suite's write scope); the workarounds
-are documented in the specs and in `lib/cors-shim.mjs`:
+The suite drives the stack exactly as a user's browser would; there are no
+test-side request shims, response patches, or deduplicated exchanges:
 
-- **okta-sim sends no CORS headers.** A browser page on the SPA origin cannot
-  fetch okta-sim's OIDC endpoints, so the SPA spec installs `lib/cors-shim.mjs`
-  on its browser context: it adds the missing Access-Control-Allow-* response
-  headers and answers preflights. Every request still reaches the real
-  okta-sim; no response body is synthesized. The shim also coalesces the
-  duplicate /token POST that React StrictMode's double-invoked callback effect
-  produces under the dev server, which would otherwise race the single-use
-  authorization code and fail the sign-in about half the time.
-- **The Admin > Audit page 500s against SQL Server.**
-  `SqlAuditEventRepository.ListRecentAsync` reads the INT `Id` column with
-  `GetInt64`, which throws; the page only works in the in-memory build. The
-  migration dashboard spec therefore asserts the `idn.AuditEvents` rows (the
-  exact rows that page renders) directly in the database, gated on the
-  pre-flip audit Id so reruns stay honest.
+- **Cross-origin OIDC is real.** okta-sim's OIDC endpoint group (discovery,
+  /authorize, /token, /jwks, /userinfo, /logout) carries a scoped CORS policy
+  that allows the SPA origin (http://localhost:5173; see
+  `src/Corridor.OktaSim/Endpoints/Oidc.cs`), so the SPA spec's browser-side
+  discovery, token, and JWKS fetches are answered by the real service. SCIM,
+  the PDP, SAML, admin, and health endpoints stay CORS-free.
+- **One code exchange per callback.** The SPA's callback page latches its
+  signin exchange, so React StrictMode's dev-mode double effect cannot fire a
+  second POST /token for the single-use authorization code; the sign-in flow
+  is deterministic under the Vite dev server without any request coalescing.
+- **The Admin > Audit page works against SQL Server** (the former INT Id
+  read as INT64 500 is fixed in `src/Corridor.Portal`), and
+  `migration-dashboard.spec.ts` asserts the page itself plus the exact
+  `idn.AuditEvents` rows it renders.
 
 Demo accounts (synthetic, password `Demo1234!` everywhere):
 admin, inspector, officer, and clerk at `corridor.example`.

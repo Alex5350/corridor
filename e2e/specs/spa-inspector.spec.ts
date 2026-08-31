@@ -1,6 +1,5 @@
-import { test, expect, type BrowserContext } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { USERS } from "../lib/portal";
-import { allowOktaCrossOrigin } from "../lib/cors-shim";
 
 const SPA_BASE = "http://localhost:5173";
 
@@ -11,16 +10,13 @@ const SPA_BASE = "http://localhost:5173";
  * assignment API serves the list with the resulting access token. Toggling a
  * checklist item PATCHes the portal and survives a reload.
  *
- * The okta-sim simulator sends no CORS response headers, so a browser page on
- * the SPA origin cannot fetch its discovery or token endpoints directly; the
- * context installs lib/cors-shim.ts, which adds those response headers only.
- * Every request still reaches the real okta-sim and the real portal.
+ * The whole flow runs in a plain browser context: okta-sim's OIDC endpoint
+ * group carries the scoped "spa" CORS policy (origin 5173), so discovery,
+ * token, and JWKS fetches work cross-origin with no test-side shim, and the
+ * SPA's callback latch keeps React StrictMode's double effect to a single
+ * code exchange.
  */
 test.describe.serial("FieldInsight SPA as the inspector", () => {
-  test.beforeEach(async ({ context }: { context: BrowserContext }) => {
-    await allowOktaCrossOrigin(context);
-  });
-
   test("PKCE sign-in from the gate lands on the assignments list", async ({ page }) => {
     await page.goto(SPA_BASE + "/");
     await expect(page.getByRole("heading", { name: "FieldInsight" })).toBeVisible();
