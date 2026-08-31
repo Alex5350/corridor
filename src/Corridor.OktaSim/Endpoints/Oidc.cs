@@ -49,10 +49,10 @@ public static class OidcEndpoints
             });
         }).RequireCors(SpaCorsPolicy);
 
-        app.MapGet("/authorize", GetAuthorizeAsync).RequireCors(SpaCorsPolicy);
-        app.MapPost("/authorize", PostAuthorizeAsync).RequireCors(SpaCorsPolicy);
+        app.MapGet("/authorize", GetAuthorizeAsync).RequireCors(SpaCorsPolicy).RequireRateLimiting("credential");
+        app.MapPost("/authorize", PostAuthorizeAsync).RequireCors(SpaCorsPolicy).RequireRateLimiting("credential");
 
-        app.MapPost("/token", ExchangeTokenAsync).RequireCors(SpaCorsPolicy);
+        app.MapPost("/token", ExchangeTokenAsync).RequireCors(SpaCorsPolicy).RequireRateLimiting("credential");
 
         app.MapMethods("/jwks", [HttpMethods.Get, HttpMethods.Post], (SigningKeys keys) =>
         {

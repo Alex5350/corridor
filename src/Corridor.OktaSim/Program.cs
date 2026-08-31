@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using Corridor.OktaSim.Endpoints;
 using Corridor.OktaSim.Models;
 using Corridor.OktaSim.Services;
@@ -35,6 +36,23 @@ else
 // XACML PDP: policies from the repo's policies/ directory with an in-code fallback.
 builder.Services.AddSingleton<PdpEngine>();
 
+// Rate limiting on the credential-facing endpoints: a fixed window per IP for the
+// authorize and token endpoints. Real providers throttle far harder and smarter; the
+// point here is that the pattern is in place and observable (429 with a Retry-After)
+// rather than left as an exercise.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("credential", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = builder.Configuration.GetValue("OktaSim:CredentialPermitLimit", 60),
+                Window = TimeSpan.FromMinutes(1),
+            }));
+});
+
 // CORS for the browser-side OIDC flow: the SPA's oidc-client-ts fetches
 // discovery, JWKS, token, and userinfo with XHR from its own origin, so the
 // OIDC endpoint group must answer cross-origin. The "spa" policy is applied
@@ -57,6 +75,7 @@ builder.Services.AddCors(options => options.AddPolicy(OidcEndpoints.SpaCorsPolic
 var app = builder.Build();
 
 // Required for endpoint-routing CORS (RequireCors) to terminate preflights.
+app.UseRateLimiter();
 app.UseCors();
 
 app.MapHealthEndpoints();
