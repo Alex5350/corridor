@@ -156,6 +156,9 @@ jobs:
         env:
           ConnectionStrings__Corridor: "Server=localhost,1433;Database=Corridor;User Id=sa;Password=CorridorDev1!;TrustServerCertificate=True;Encrypt=True"
         run: |
+          # Warm the dotnet session files with ONE process first: concurrent cold
+          # startups race creating /tmp/.dotnet/shm and fail with errno EEXIST.
+          dotnet build src/Corridor.OktaSim/Corridor.OktaSim.csproj -v q --nologo
           ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:8080 dotnet run --project src/Corridor.OktaSim --no-launch-profile &
           ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:8090 dotnet run --project src/Corridor.AdfsSim --no-launch-profile &
           ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:8000 dotnet run --project src/Corridor.Legacy --no-launch-profile &
