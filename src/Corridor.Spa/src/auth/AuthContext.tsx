@@ -43,6 +43,13 @@ export interface AuthState {
   sessionMessage: string | null;
   signin: (loginHint?: string) => Promise<void>;
   signout: () => Promise<void>;
+  /**
+   * Drops a session that is no longer trustworthy (for example the portal
+   * answering 401 against the access token): clears the stored user and
+   * returns to the login gate with the given reason. Same reset path the
+   * silent-renew and token-expired handlers use.
+   */
+  resetSession: (message: string) => void;
   clearSessionMessage: () => void;
 }
 
@@ -126,6 +133,15 @@ export function AuthProvider({ manager, children }: AuthProviderProps) {
 
   const clearSessionMessage = useCallback(() => setSessionMessage(null), []);
 
+  const resetSession = useCallback(
+    (message: string) => {
+      setUser(null);
+      setSessionMessage(message);
+      void manager.removeUser();
+    },
+    [manager],
+  );
+
   const value = useMemo<AuthState>(
     () => ({
       status: !ready ? "loading" : user ? "authenticated" : "anonymous",
@@ -133,9 +149,10 @@ export function AuthProvider({ manager, children }: AuthProviderProps) {
       sessionMessage,
       signin,
       signout,
+      resetSession,
       clearSessionMessage,
     }),
-    [ready, user, sessionMessage, signin, signout, clearSessionMessage],
+    [ready, user, sessionMessage, signin, signout, resetSession, clearSessionMessage],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

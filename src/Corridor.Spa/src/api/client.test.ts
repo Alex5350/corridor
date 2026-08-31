@@ -21,7 +21,7 @@ const assignment = {
 describe("createApi", () => {
   it("sends the bearer token and parses the assignment list", async () => {
     const fetchMock = vi.fn(async () => jsonResponse([assignment]));
-    const api = createApi(() => "token-123", fetchMock as unknown as typeof fetch);
+    const api = createApi(() => "token-123", { fetchFn: fetchMock as unknown as typeof fetch });
 
     const list = await api.list();
 
@@ -33,7 +33,7 @@ describe("createApi", () => {
 
   it("PATCHes itemIndex/done as JSON and tolerates the 204", async () => {
     const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
-    const api = createApi(() => "token-123", fetchMock as unknown as typeof fetch);
+    const api = createApi(() => "token-123", { fetchFn: fetchMock as unknown as typeof fetch });
 
     await api.setChecklistItem(3, 0, true);
 
@@ -52,7 +52,7 @@ describe("createApi", () => {
           { status: 422, headers: { "content-type": "application/problem+json" } },
         ),
     );
-    const api = createApi(() => "token-123", fetchMock as unknown as typeof fetch);
+    const api = createApi(() => "token-123", { fetchFn: fetchMock as unknown as typeof fetch });
 
     const error = await api.setChecklistItem(3, 4, true).catch((cause: unknown) => cause);
 
@@ -61,11 +61,45 @@ describe("createApi", () => {
     expect((error as ApiError).title).toBe("Item out of range");
   });
 
+  it("resets the session through onUnauthorized when the portal answers 401", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ title: "Not authorized", detail: "expired token" }), {
+          status: 401,
+          headers: { "content-type": "application/problem+json" },
+        }),
+    );
+    const onUnauthorized = vi.fn();
+    const api = createApi(() => "stale-token", {
+      fetchFn: fetchMock as unknown as typeof fetch,
+      onUnauthorized,
+    });
+
+    const error = await api.list().catch((cause: unknown) => cause);
+
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(401);
+  });
+
+  it("does not reset the session on non-401 failures", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({ title: "Boom" }, 500));
+    const onUnauthorized = vi.fn();
+    const api = createApi(() => "token-123", {
+      fetchFn: fetchMock as unknown as typeof fetch,
+      onUnauthorized,
+    });
+
+    await api.list().catch(() => undefined);
+
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
   it("wraps network faults as a status zero ApiError", async () => {
     const fetchMock = vi.fn(async () => {
       throw new TypeError("fetch failed");
     });
-    const api = createApi(() => null, fetchMock as unknown as typeof fetch);
+    const api = createApi(() => null, { fetchFn: fetchMock as unknown as typeof fetch });
 
     const error = await api.list().catch((cause: unknown) => cause);
 

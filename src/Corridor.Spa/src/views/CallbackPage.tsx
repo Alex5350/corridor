@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { UserManager } from "oidc-client-ts";
 import { ErrorPanel } from "../components/ErrorPanel";
 import { Link } from "../router";
@@ -13,24 +13,26 @@ interface CallbackPageProps {
  */
 export function CallbackPage({ manager }: CallbackPageProps) {
   const [error, setError] = useState<unknown>(null);
+  const exchanged = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
+    // One-shot latch. React StrictMode double-invokes effects under the dev
+    // server, and a second signinCallback() would send a second POST /token
+    // for the same single-use authorization code: one exchange always fails
+    // with invalid_grant. The ref survives the StrictMode remount, so the
+    // second invocation no-ops and exactly one exchange happens.
+    if (exchanged.current) {
+      return;
+    }
+    exchanged.current = true;
     manager
       .signinCallback()
       .then(() => {
-        if (!cancelled) {
-          window.location.replace("/");
-        }
+        window.location.replace("/");
       })
       .catch((cause: unknown) => {
-        if (!cancelled) {
-          setError(cause);
-        }
+        setError(cause);
       });
-    return () => {
-      cancelled = true;
-    };
   }, [manager]);
 
   return (

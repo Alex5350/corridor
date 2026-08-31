@@ -22,11 +22,17 @@ interface AppProps {
  */
 export function App({ manager }: AppProps) {
   const { route, navigate } = useRoute();
-  const { status, user, sessionMessage } = useAuth();
+  const { status, user, sessionMessage, resetSession } = useAuth();
 
   const api = useMemo(
-    () => createApi(() => user?.access_token ?? null),
-    [user],
+    () =>
+      createApi(() => user?.access_token ?? null, {
+        // The portal answering 401 means the session is dead: reset it and
+        // land back on the login gate with a reason, not a dead-end error.
+        onUnauthorized: () =>
+          resetSession("Your session was rejected by the portal. Please sign in again."),
+      }),
+    [user, resetSession],
   );
 
   if (route.name === "callback") {

@@ -87,6 +87,21 @@ function Probe() {
   );
 }
 
+/** Drives resetSession the way the API client does on a portal 401. */
+function ResetProbe() {
+  const { status, sessionMessage, resetSession } = useAuth();
+  return (
+    <>
+      <button type="button" onClick={() => resetSession("Your session was rejected.")}>
+        Reset
+      </button>
+      <p data-testid="probe">
+        {status}|{sessionMessage ?? "-"}
+      </p>
+    </>
+  );
+}
+
 describe("AuthProvider session lifecycle", () => {
   it("starts authenticated when a stored user is present", async () => {
     const manager = fakeManager(fakeUser());
@@ -145,6 +160,27 @@ describe("AuthProvider session lifecycle", () => {
     );
     await waitFor(() =>
       expect(screen.getByTestId("probe")).toHaveTextContent(/^anonymous\|-$/),
+    );
+  });
+
+  it("resetSession clears the stored user and shows the reason on the gate", async () => {
+    const manager = fakeManager(fakeUser());
+    render(
+      <AuthProvider manager={manager}>
+        <ResetProbe />
+      </AuthProvider>,
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("probe")).toHaveTextContent(/^authenticated\|-$/),
+    );
+
+    act(() => {
+      screen.getByRole("button", { name: "Reset" }).click();
+    });
+
+    expect(manager.removeUser).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("probe")).toHaveTextContent(
+      /^anonymous\|Your session was rejected\.$/,
     );
   });
 });
