@@ -1,5 +1,6 @@
 using Corridor.Portal.Api;
 using Corridor.Portal.Auth;
+using Corridor.Portal.Auth.Pdp;
 using Corridor.Portal.Auth.Saml;
 using Corridor.Portal.Data;
 using Corridor.Portal.Data.Memory;
@@ -66,6 +67,32 @@ builder.Services.AddHttpClient<OktaServiceTokenClient>(client => client.Timeout 
         Delay = TimeSpan.FromMilliseconds(500),
         UseJitter = false
     }));
+
+// The portal is a policy enforcement point: every guarded API call asks okta-sim's XACML PDP
+// for (role, resource, action). The pdp named client caps a decision at 3 seconds and retries
+// once on a transient failure; real decisions are cached 15 minutes per triple, and every
+// other outcome (unreachable, HTTP error, unparseable Decision) fails closed to a Deny with
+// one warning logged (ADR 0007).
+builder.Services.AddSingleton(TimeProvider.System);
+var pdpBaseUrl = builder.Configuration["Portal:PdpBaseUrl"] is { Length: > 0 } configured
+    ? configured
+    : new PortalSiteOptions().PdpBaseUrl;
+builder.Services.AddHttpClient(PdpHttpClient.ClientName, client =>
+    {
+        client.BaseAddress = new Uri(pdpBaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(3);
+    })
+    .AddResilienceHandler("pdp", pipeline => pipeline.AddRetry(new HttpRetryStrategyOptions
+    {
+        MaxRetryAttempts = 1,
+        BackoffType = DelayBackoffType.Constant,
+        Delay = TimeSpan.FromMilliseconds(500),
+        UseJitter = false
+    }));
+builder.Services.AddSingleton<IPdpClient>(sp => new PdpHttpClient(
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient(PdpHttpClient.ClientName),
+    sp.GetRequiredService<TimeProvider>(),
+    sp.GetRequiredService<ILogger<PdpHttpClient>>()));
 
 var useInMemory = builder.Configuration.GetValue<bool>("Data:UseInMemory");
 var connectionString = builder.Configuration.GetConnectionString("Corridor");

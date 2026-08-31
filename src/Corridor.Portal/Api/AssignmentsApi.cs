@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Corridor.Portal.Auth;
+using Corridor.Portal.Auth.Pdp;
 using Corridor.Portal.Data;
 using Corridor.Portal.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +40,7 @@ public static class AssignmentsApi
 
         group.MapPatch("/{id:int}", async (int id, [FromBody] AssignmentPatchRequest request,
             ClaimsPrincipal user, [FromServices] IAssignmentRepository assignments,
-            [FromServices] ChecklistService checklists, CancellationToken ct) =>
+            [FromServices] ChecklistService checklists, [FromServices] IPdpClient pdp, CancellationToken ct) =>
         {
             if (request.ItemIndex is null || request.Done is null)
             {
@@ -68,6 +69,16 @@ public static class AssignmentsApi
                     statusCode: 403,
                     detail: $"Assignment {id} is assigned to {assignment.InspectorUpn}.",
                     extensions: new Dictionary<string, object?> { ["errorCode"] = NotAssignmentOwnerCode });
+            }
+            // Defense in depth (ADR 0007): ownership passed, now the central PDP gets the final
+            // word on assignments:write (policy 20: Inspectors). A Deny is 403 cor:PdpDenied.
+            var role = PdpEnforcement.ReadRole(user);
+            var decision = role is null
+                ? new PdpDecision(false, "The authenticated identity carries no role claim for the policy decision point.")
+                : await pdp.DecideAsync(role, PdpAuthorization.AssignmentsResource, PdpAuthorization.WriteAction, ct);
+            if (!decision.Permit)
+            {
+                return PdpEnforcement.Denied(decision.StatusMessage);
             }
             if (!checklists.TryToggle(assignment.ChecklistJson, request.ItemIndex.Value, request.Done.Value, out var updatedJson))
             {

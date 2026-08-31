@@ -1,3 +1,6 @@
+using System.Net;
+using System.Xml.Linq;
+using Corridor.Portal.Auth.Pdp;
 using Corridor.Portal.Models;
 using Corridor.Portal.Services.TraceLink;
 using Microsoft.AspNetCore.Authentication;
@@ -10,10 +13,13 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Corridor.Portal.Tests;
 
-/// <summary>Boots the real portal with in-memory stores, a fake SOAP client, and test auth.</summary>
+/// <summary>Boots the real portal with in-memory stores, a fake SOAP client, a fake PDP, and test auth.</summary>
 public class PortalFactory : WebApplicationFactory<Program>
 {
     public FakeTraceLinkClient TraceClient { get; } = new();
+
+    /// <summary>Fake PDP behind the pdp named client: permits everything by default, scriptable per triple.</summary>
+    public FakePdpHandler Pdp { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -27,7 +33,8 @@ public class PortalFactory : WebApplicationFactory<Program>
             {
                 ["Data:UseInMemory"] = "true",
                 ["Okta:Authority"] = "http://localhost:59999",
-                ["Adfs:BaseAddress"] = "http://localhost:59998"
+                ["Adfs:BaseAddress"] = "http://localhost:59998",
+                ["Portal:PdpBaseUrl"] = "http://localhost:59997"
             });
         });
         builder.ConfigureTestServices(services =>
@@ -49,6 +56,10 @@ public class PortalFactory : WebApplicationFactory<Program>
                     policy.RequireAuthenticatedUser();
                 });
             });
+            // The real pdp pipeline (3 second timeout, one retry) over the scripted fake, so
+            // PEP tests exercise the actual client without a network.
+            services.AddHttpClient(PdpHttpClient.ClientName)
+                .ConfigurePrimaryHttpMessageHandler(() => Pdp);
         });
     }
 }
@@ -115,5 +126,77 @@ public sealed class FakeTraceLinkClient : ITraceLinkClient
             FaultSubcodeForNextCall = null;
             throw new TraceLinkFaultException(subcode, $"Scripted fault {subcode} for tests.");
         }
+    }
+}
+
+/// <summary>
+/// Stands in for okta-sim's PDP in WebApplicationFactory tests. Parses the XACML request the
+/// portal sends, records it, and answers Permit unless the (role, resource, action) triple is
+/// scripted to Deny, a raw response is staged (garbage-response tests), or a number of next
+/// requests is scripted to throw (unreachable tests; the count survives the client's retry).
+/// </summary>
+public sealed class FakePdpHandler : HttpMessageHandler
+{
+    private const string ContextNs = "urn:oasis:names:tc:xacml:2.0:context:schema:os";
+
+    private readonly Dictionary<(string Role, string Resource, string Action), string> _scriptedStatusMessages = new();
+
+    public int RequestsReceived { get; private set; }
+
+    public List<string> RequestBodies { get; } = [];
+
+    public List<(string Role, string Resource, string Action)> ReceivedTriples { get; } = [];
+
+    /// <summary>Raw response body returned for the next request, used to stage unparseable payloads.</summary>
+    public string? RawResponseForNextCall { get; set; }
+
+    /// <summary>How many of the next requests throw (an unreachable PDP), decremented per attempt.</summary>
+    public int FailNextRequestsWith { get; set; }
+
+    public void ScriptDeny(string role, string resource, string action, string statusMessage = "denied by the scripted policy")
+        => _scriptedStatusMessages[(role, resource, action)] = statusMessage;
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        RequestsReceived++;
+        var body = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
+        RequestBodies.Add(body);
+        var triple = ParseTriple(body);
+        ReceivedTriples.Add(triple);
+
+        if (FailNextRequestsWith > 0)
+        {
+            FailNextRequestsWith--;
+            throw new HttpRequestException("Scripted PDP unreachable.");
+        }
+        if (RawResponseForNextCall is { } raw)
+        {
+            RawResponseForNextCall = null;
+            return Text(raw);
+        }
+        return _scriptedStatusMessages.TryGetValue(triple, out var statusMessage)
+            ? Text(Response("Deny", statusMessage))
+            : Text(Response("Permit", null));
+    }
+
+    private static HttpResponseMessage Text(string xml) => new(HttpStatusCode.OK)
+    {
+        Content = new StringContent(xml, System.Text.Encoding.UTF8, "application/xacml+xml")
+    };
+
+    /// <summary>Mirrors the PdpEngine response shape the portal client parses.</summary>
+    private static string Response(string decision, string? statusMessage) =>
+        $"<Response xmlns=\"{ContextNs}\"><Result><Decision>{decision}</Decision><Status>" +
+        "<StatusCode Value=\"urn:oasis:names:tc:xacml:1.0:status:ok\"/>" +
+        (statusMessage is null ? string.Empty : $"<StatusMessage>{statusMessage}</StatusMessage>") +
+        "</Status></Result></Response>";
+
+    private static (string Role, string Resource, string Action) ParseTriple(string xml)
+    {
+        var root = XDocument.Parse(xml).Root ?? throw new InvalidOperationException("The request body has no root element.");
+        XNamespace ns = ContextNs;
+        string Category(string name) =>
+            root.Element(ns + name)?.Element(ns + "Attribute")?.Element(ns + "AttributeValue")?.Value ?? string.Empty;
+        return (Category("Subject"), Category("Resource"), Category("Action"));
     }
 }

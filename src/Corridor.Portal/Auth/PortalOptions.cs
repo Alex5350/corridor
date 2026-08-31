@@ -35,6 +35,9 @@ public sealed class PortalSiteOptions
 
     /// <summary>Origin allowed to call the assignments API (the FieldInsight SPA dev server).</summary>
     public string SpaOrigin { get; set; } = "http://localhost:5173";
+
+    /// <summary>Base URL of the XACML policy decision point on okta-sim (ADR 0007).</summary>
+    public string PdpBaseUrl { get; set; } = "http://localhost:8080";
 }
 
 public sealed class LegacyOptions

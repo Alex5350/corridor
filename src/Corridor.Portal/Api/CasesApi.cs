@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Corridor.Portal.Auth;
+using Corridor.Portal.Auth.Pdp;
 using Corridor.Portal.Models;
 using Corridor.Portal.Services.TraceLink;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,9 @@ public static class CasesApi
 {
     public static IEndpointRouteBuilder MapCasesApi(this IEndpointRouteBuilder app)
     {
+        // AnyRole stays the authentication gate; each handler then asks the central PDP for
+        // the authorization decision on (role, trace-cases, action) and turns a Deny into a
+        // 403 problem detail with errorCode cor:PdpDenied (ADR 0007).
         var group = app.MapGroup("/api/cases").RequireAuthorization("AnyRole");
 
         group.MapGet("/", async ([FromQuery] string? statusFilter, ClaimsPrincipal user,
@@ -38,7 +42,8 @@ public static class CasesApi
             {
                 return UpstreamTimeout();
             }
-        });
+        })
+            .WithPdpDecision(PdpAuthorization.TraceCasesResource, PdpAuthorization.ReadAction);
 
         group.MapGet("/{caseNumber}", async (string caseNumber,
             [FromServices] ITraceLinkClient traceLink, CancellationToken ct) =>
@@ -64,8 +69,12 @@ public static class CasesApi
             {
                 return UpstreamTimeout();
             }
-        });
+        })
+            .WithPdpDecision(PdpAuthorization.TraceCasesResource, PdpAuthorization.ReadAction);
 
+        // Policy 15 (policies/15-trace-create-officers-admins.xacml.xml) permits the
+        // create verb for Officers and Admins, so this endpoint carries its own action
+        // rather than borrowing the read permit.
         group.MapPost("/", async ([FromBody] CreateCaseRequest request, ClaimsPrincipal user,
             [FromServices] ITraceLinkClient traceLink, CancellationToken ct) =>
         {
@@ -101,7 +110,8 @@ public static class CasesApi
             {
                 return UpstreamTimeout();
             }
-        });
+        })
+            .WithPdpDecision(PdpAuthorization.TraceCasesResource, PdpAuthorization.CreateAction);
 
         return app;
     }
