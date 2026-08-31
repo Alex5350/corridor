@@ -130,6 +130,7 @@ public class EndpointTests : IClassFixture<PortalFactory>
     {
         using var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Add("X-Test-Upn", "inspector@corridor.example");
+        client.DefaultRequestHeaders.Add("X-Test-Role", "Inspector");
 
         var response = await client.PatchAsJsonAsync("/api/assignments/1", new { itemIndex = 1, done = true });
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -150,6 +151,8 @@ public class EndpointTests : IClassFixture<PortalFactory>
     public async Task AssignmentsPatch_RejectsOutOfRangeIndexAsProblemDetails()
     {
         using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-Upn", "inspector@corridor.example");
+        client.DefaultRequestHeaders.Add("X-Test-Role", "Inspector");
 
         var response = await client.PatchAsJsonAsync("/api/assignments/2", new { itemIndex = 99, done = true });
 

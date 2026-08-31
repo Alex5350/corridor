@@ -19,6 +19,9 @@ public sealed record AssignmentResponse(
 /// <summary>Endpoints consumed by the FieldInsight SPA. Bearer only: the SPA exists after cutover.</summary>
 public static class AssignmentsApi
 {
+    /// <summary>Stable error code carried on 403 problem details when the caller may not modify an assignment.</summary>
+    public const string NotAssignmentOwnerCode = "cor:NotAssignmentOwner";
+
     public static IEndpointRouteBuilder MapAssignmentsApi(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/assignments").RequireAuthorization("SpaBearer").RequireCors("Spa");
@@ -35,8 +38,8 @@ public static class AssignmentsApi
         });
 
         group.MapPatch("/{id:int}", async (int id, [FromBody] AssignmentPatchRequest request,
-            [FromServices] IAssignmentRepository assignments, [FromServices] ChecklistService checklists,
-            CancellationToken ct) =>
+            ClaimsPrincipal user, [FromServices] IAssignmentRepository assignments,
+            [FromServices] ChecklistService checklists, CancellationToken ct) =>
         {
             if (request.ItemIndex is null || request.Done is null)
             {
@@ -50,6 +53,21 @@ public static class AssignmentsApi
                 return Results.Problem(title: "Assignment not found.",
                     statusCode: 404,
                     detail: $"No assignment {id}.");
+            }
+            // Writes follow policy 20: only Inspectors write assignments, and only on their
+            // own work; Admin overrides for reassignment support. GET above stays scoped to
+            // the caller, this closes the same gap for the mutating verb.
+            var caller = PortalClaims.ReadUpn(user);
+            var isOwner = user.IsInRole("Inspector")
+                && caller is not null
+                && string.Equals(assignment.InspectorUpn, caller, StringComparison.OrdinalIgnoreCase);
+            if (!isOwner && !user.IsInRole("Admin"))
+            {
+                return Results.Problem(
+                    title: "Only the assigned inspector or an administrator may update this checklist.",
+                    statusCode: 403,
+                    detail: $"Assignment {id} is assigned to {assignment.InspectorUpn}.",
+                    extensions: new Dictionary<string, object?> { ["errorCode"] = NotAssignmentOwnerCode });
             }
             if (!checklists.TryToggle(assignment.ChecklistJson, request.ItemIndex.Value, request.Done.Value, out var updatedJson))
             {
