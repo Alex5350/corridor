@@ -1,0 +1,174 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: corridor
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: corridor-config
+  namespace: corridor
+data:
+  # Service-to-service URLs use cluster DNS. The browser-facing OIDC issuer stays a
+  # host URL because browsers cannot resolve cluster DNS (see README).
+  OktaSim__Issuer: "http://oktasim.corridor.svc.cluster.local:8080"
+  AdfsSim__Issuer: "http://adfssim.corridor.svc.cluster.local:8090"
+  Portal__LegacyServiceUrl: "http://legacy.corridor.svc.cluster.local:8000/TraceLink.svc"
+  Portal__AdfsMetadataUrl: "http://adfssim.corridor.svc.cluster.local:8090/federationmetadata/2007-06/federationmetadata.xml"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: corridor-secrets
+  namespace: corridor
+type: Opaque
+stringData:
+  # Documented demo constants only; replace with a real secret store for any actual use.
+  PortalClientSecret: "corridor-portal-secret"
+  LegacyClientSecret: "corridor-legacy-secret"
+  ScimToken: "corridor-scim-token"
+  SqlPassword: "CorridorDev1!"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oktasim
+  namespace: corridor
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: oktasim } }
+  template:
+    metadata: { labels: { app: oktasim } }
+    spec:
+      containers:
+        - name: oktasim
+          image: corridor-oktasim:local
+          ports: [{ containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: corridor-config }
+            - secretRef: { name: corridor-secrets }
+          env:
+            - name: ConnectionStrings__Corridor
+              value: "Server=YOUR-SQL-HOST;Database=Corridor;User Id=sa;Password=$(SqlPassword);TrustServerCertificate=True"
+          livenessProbe: { httpGet: { path: /healthz, port: 8080 }, periodSeconds: 30 }
+          readinessProbe: { httpGet: { path: /healthz, port: 8080 }, periodSeconds: 10 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: oktasim, namespace: corridor }
+spec:
+  selector: { app: oktasim }
+  ports: [{ port: 8080, targetPort: 8080 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adfssim
+  namespace: corridor
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: adfssim } }
+  template:
+    metadata: { labels: { app: adfssim } }
+    spec:
+      containers:
+        - name: adfssim
+          image: corridor-adfssim:local
+          ports: [{ containerPort: 8090 }]
+          envFrom:
+            - configMapRef: { name: corridor-config }
+          livenessProbe: { httpGet: { path: /healthz, port: 8090 }, periodSeconds: 30 }
+          readinessProbe: { httpGet: { path: /healthz, port: 8090 }, periodSeconds: 10 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: adfssim, namespace: corridor }
+spec:
+  selector: { app: adfssim }
+  ports: [{ port: 8090, targetPort: 8090 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy
+  namespace: corridor
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: legacy } }
+  template:
+    metadata: { labels: { app: legacy } }
+    spec:
+      containers:
+        - name: legacy
+          image: corridor-legacy:local
+          ports: [{ containerPort: 8000 }]
+          envFrom:
+            - configMapRef: { name: corridor-config }
+            - secretRef: { name: corridor-secrets }
+          env:
+            - name: ConnectionStrings__Corridor
+              value: "Server=YOUR-SQL-HOST;Database=Corridor;User Id=sa;Password=$(SqlPassword);TrustServerCertificate=True"
+          livenessProbe: { httpGet: { path: /healthz, port: 8000 }, periodSeconds: 30 }
+          readinessProbe: { httpGet: { path: /healthz, port: 8000 }, periodSeconds: 10 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: legacy, namespace: corridor }
+spec:
+  selector: { app: legacy }
+  ports: [{ port: 8000, targetPort: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal
+  namespace: corridor
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: portal } }
+  template:
+    metadata: { labels: { app: portal } }
+    spec:
+      containers:
+        - name: portal
+          image: corridor-portal:local
+          ports: [{ containerPort: 5200 }]
+          envFrom:
+            - configMapRef: { name: corridor-config }
+            - secretRef: { name: corridor-secrets }
+          env:
+            - name: ConnectionStrings__Corridor
+              value: "Server=YOUR-SQL-HOST;Database=Corridor;User Id=sa;Password=$(SqlPassword);TrustServerCertificate=True"
+          livenessProbe: { httpGet: { path: /healthz, port: 5200 }, periodSeconds: 30 }
+          readinessProbe: { httpGet: { path: /healthz, port: 5200 }, periodSeconds: 10 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: portal, namespace: corridor }
+spec:
+  selector: { app: portal }
+  ports: [{ port: 5200, targetPort: 5200 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spa
+  namespace: corridor
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: spa } }
+  template:
+    metadata: { labels: { app: spa } }
+    spec:
+      containers:
+        - name: spa
+          image: corridor-spa:local
+          ports: [{ containerPort: 5173 }]
+          readinessProbe: { httpGet: { path: /, port: 5173 }, periodSeconds: 10 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: spa, namespace: corridor }
+spec:
+  selector: { app: spa }
+  ports: [{ port: 5173, targetPort: 5173 }]

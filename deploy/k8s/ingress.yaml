@@ -1,0 +1,31 @@
+# Ingress (Kubernetes) or Route (OpenShift): pick one.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: corridor
+  namespace: corridor
+  annotations:
+    # The demo is plain http inside the cluster; the edge terminates TLS.
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+    - host: corridor.example
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: portal, port: { number: 5200 } } }
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: portal, port: { number: 5200 } } }
+---
+# OpenShift alternative: a Route with edge TLS exposing the portal service.
+# apiVersion: route.openshift.io/v1
+# kind: Route
+# metadata:
+#   name: corridor
+#   namespace: corridor
+# spec:
+#   to: { kind: Service, name: portal }
+#   port: { targetPort: 5200 }
+#   tls: { termination: edge }
