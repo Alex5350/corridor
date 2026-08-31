@@ -33,6 +33,12 @@ Named honestly, so nobody copies the wrong half:
 - **No real PII**: every user, licensee, case, and assignment is synthetic; this is a
   boundary, not a shortcut ([ADR 0001](adr/0001-simulate-both-providers-locally.md)).
 
+The gitleaks full-history scan pins its known findings in `.gitleaksignore`: the
+runbook's SCIM curl examples (documented demo bearer), the `sonar.projectKey` line (a
+project identifier, not a secret), and the two committed development-only signing PEMs
+(see certs/README.md). Every entry is a deliberate, named demo artifact; the scan stays
+on.
+
 ## Production-hardened patterns demonstrated
 
 The half worth copying:
