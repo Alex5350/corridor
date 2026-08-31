@@ -143,6 +143,12 @@ export async function resetTrustModesToAdfs() {
   await setTrustMode("spa", "Adfs");
 }
 
+/** Runs one administrative statement (no parameters) against the Corridor database. */
+async function runSql(sqlText) {
+  const pool = await getPool();
+  await pool.request().query(sqlText);
+}
+
 /** Clears the audit trail so captures show only the events this run drives. */
 export async function resetAuditEvents() {
   await runSql("DELETE FROM idn.AuditEvents");
@@ -175,4 +181,27 @@ export async function recentAuditEvents(limit = 10) {
 /** The highest audit Id right now, for proving that new rows were written. */
 export async function maxAuditId() {
   return (await scalar("SELECT ISNULL(MAX(Id), 0) AS result FROM idn.AuditEvents", {})) ?? 0;
+}
+
+/** Directory rows as the provisioning dashboard reads them (idn.Users). */
+export async function directoryUsers() {
+  const pool = await getPool();
+  const result = await pool.request()
+    .query("SELECT Upn, DisplayName, Role, ScimExternalId, Active FROM idn.Users ORDER BY Upn");
+  return result.recordset.map((row) => ({
+    upn: row.Upn,
+    displayName: row.DisplayName,
+    role: row.Role,
+    scimExternalId: row.ScimExternalId,
+    active: Boolean(row.Active),
+  }));
+}
+
+/** Setup-only directory write: flips the Active flag without touching the audit trail. */
+export async function setDirectoryUserActive(upn, active) {
+  const pool = await getPool();
+  const request = pool.request();
+  request.input("upn", mssql.NVarChar, upn);
+  request.input("active", mssql.Bit, active);
+  await request.query("UPDATE idn.Users SET Active = @active WHERE Upn = @upn");
 }

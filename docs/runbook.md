@@ -66,6 +66,58 @@ Expect one new row naming the actor and the transition (for example "Dual -> Okt
 Cross-check that `idn.MigrationApps.TrustMode` agrees with the newest row, then exercise
 the app's sign-in path for the new mode.
 
+## Provision the directory (dashboard action)
+
+The same dashboard carries the account side of the cutover: Admin > Migration, the
+"Directory provisioning" card, button **Provision directory**. The run synchronizes
+`idn.Users` into okta-sim over SCIM 2.0 ([ADR 0006](adr/0006-scim-provisioning-bridge.md)):
+accounts without a `ScimExternalId` are created (the returned id is written back to SQL),
+accounts that have one are updated (`userName`, `displayName`, `active`, and the role
+through the `urn:corridor:scim:1.0:User` extension), and accounts switched off in SQL are
+deactivated with a PATCH. Expect the per-run summary
+"Directory provisioned into okta-sim: created X, updated Y, deactivated Z." and one audit
+row per run:
+
+```sql
+SELECT TOP 5 At, Actor, AppKey, Event, Detail
+  FROM idn.AuditEvents
+ WHERE Event = N'DirectoryProvisioned'
+ ORDER BY Id DESC;
+```
+
+`Detail` repeats the summary counts, `AppKey` is `oktasim`. Cross-check that every active
+row of `SELECT Upn, Role, Active, ScimExternalId FROM idn.Users;` has a `ScimExternalId`,
+and that the live directory agrees
+(`corridor-ops scim-dump --url http://localhost:8080 --token corridor-scim-token`).
+A failed run shows the error inline on the dashboard and writes no audit row: fix the
+cause (okta-sim down, bad `Portal:ScimToken`, SQL unreachable) and press the button again;
+creates are retried safely because an account only loses its "no SCIM id yet" state once
+the provider's id has been recorded.
+
+### Fallback: direct SCIM calls
+
+When the dashboard errors but the SCIM endpoint is reachable, push the same operations by
+hand (any HTTP client; the ops tool's `--url`/`--token` flags take a real endpoint too):
+
+```bash
+# Create one account (the response body carries the new "id")
+curl -s -X POST http://localhost:8080/scim/v2/Users \
+  -H "Authorization: Bearer corridor-scim-token" -H "Content-Type: application/scim+json" \
+  -d '{"schemas":["urn:ietf:params:scim:schemas:core:2.0:User","urn:corridor:scim:1.0:User"],"userName":"officer@corridor.example","displayName":"Priya Raman","active":true,"urn:corridor:scim:1.0:User":{"role":"Officer"}}'
+
+# Record the correlation id so later runs update instead of re-create
+# UPDATE idn.Users SET ScimExternalId = N'<id from the response>' WHERE Upn = N'officer@corridor.example';
+
+# Deactivate (replace-style PATCH on active only)
+curl -s -X PATCH http://localhost:8080/scim/v2/Users/<id> \
+  -H "Authorization: Bearer corridor-scim-token" -H "Content-Type: application/scim+json" \
+  -d '{"schemas":["urn:ietf:params:scim:api:messages:2.0:PatchOp"],"Operations":[{"op":"replace","path":"active","value":false}]}'
+```
+
+Updates are the same POST shape against `PUT /scim/v2/Users/<id>`. Finish by writing the
+matching audit row by hand, mirroring the flip fallback above
+(`AppKey N'oktasim'`, `Event N'DirectoryProvisioned'`, `Detail` with the counts).
+
 ## Token troubleshooting with the ops tool
 
 Full usage: `src/Corridor.Ops.Tool/USAGE.md`. Build once with

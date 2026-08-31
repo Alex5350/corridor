@@ -25,6 +25,13 @@ Implement SCIM 2.0 on the target provider and treat it as the provisioning bridg
   bridge's correlation id for the source directory.
 - Bearer auth uses the documented demo constant `corridor-scim-token`; the ops tool can
   dump the directory on demand (`corridor-ops scim-dump`, exit 5 on a SCIM error).
+- The cutover UI demonstrates the bridge, not just the ops tool: the migration dashboard's
+  "Provision directory" action (`src/Corridor.Portal/Pages/Admin/Migration`) runs this
+  endpoint against every `idn.Users` row through the portal's SCIM client (the `scim`
+  named HttpClient, 5 second cap, `Portal:ScimBaseUrl`/`Portal:ScimToken`), records each
+  returned id in `ScimExternalId`, shows the created/updated/deactivated counts per run,
+  and writes one `DirectoryProvisioned` audit event (`AppKey oktasim`) so the account move
+  lives in the same audited story as the trust flips.
 
 ## Consequences
 

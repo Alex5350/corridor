@@ -76,6 +76,8 @@ test.describe.serial("FieldInsight SPA as the inspector", () => {
     const facts = page.locator(".card", { hasText: "Signed-in inspector" }).locator("dl.facts");
     await expect(facts).toContainText(USERS.inspector);
     await expect(facts).toContainText("Inspector");
-    await expect(facts).toContainText("okta-sim");
+    // The identity provider row reads the ID token payload (the idp claim when
+    // present, otherwise the issuer okta-sim signed the token with).
+    await expect(facts).toContainText("Identity providerhttp://localhost:8080");
   });
 });

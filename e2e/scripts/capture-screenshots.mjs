@@ -11,7 +11,7 @@
  * real flip buttons.
  */
 
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -50,6 +50,14 @@ function newContext(browser) {
 async function shoot(page, name) {
   const file = path.join(OUT_DIR, name);
   await page.screenshot({ path: file, fullPage: true });
+  console.log(`[shots] wrote ${name}`);
+  return file;
+}
+
+/** Writes an in-memory PNG buffer (a capture held for a composite) to the shot directory. */
+function writeShot(name, png) {
+  const file = path.join(OUT_DIR, name);
+  writeFileSync(file, png);
   console.log(`[shots] wrote ${name}`);
   return file;
 }
@@ -151,9 +159,59 @@ async function main() {
       await context.close();
     }
 
-    // 6. Migration dashboard mid-cutover with the audit trail below. The
+    // 6. Session before/after pair: the same home page, signed in as the same
+    // officer, first under an ADFS-issued session and then under an Okta-issued
+    // one. The two captures land as shot-session-adfs.png and
+    // shot-session-okta.png, plus a stacked composite with captions.
+    {
+      const context = await newContext(browser);
+      const page = await context.newPage();
+
+      const shootHome = async () => {
+        await page.goto("http://localhost:5200/");
+        await page.getByRole("heading", { name: "Import permit program" }).waitFor();
+        const card = page.locator(".card", { hasText: "Sign-in status" });
+        await card.getByText("Identity provider").waitFor();
+        return page.screenshot({ fullPage: true });
+      };
+
+      await setTrustMode("portal", "Adfs");
+      await portalSignIn(page, OFFICER);
+      const adfsPng = await shootHome();
+      await page.locator(".header-session button", { hasText: "Sign out" }).click();
+      await page.waitForURL(/localhost:5200\/Logout/);
+
+      await setTrustMode("portal", "Okta");
+      await portalSignIn(page, OFFICER);
+      const oktaPng = await shootHome();
+      await context.close();
+
+      await writeShot("shot-session-adfs.png", adfsPng);
+      await writeShot("shot-session-okta.png", oktaPng);
+
+      // One Chromium render of the two captures with captions, stacked exactly
+      // like the migration dashboard composite below.
+      const compositeContext = await newContext(browser);
+      const composite = await compositeContext.newPage();
+      await composite.setContent(
+        `<body style="margin:0;background:#fff;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+           <div style="padding:0.9rem 1.25rem;font-size:1.05rem;font-weight:600;color:#1f2937">Before: the ADFS-issued session</div>
+           <img style="display:block;width:100%" src="data:image/png;base64,${adfsPng.toString("base64")}">
+           <div style="padding:0.9rem 1.25rem;font-size:1.05rem;font-weight:600;color:#1f2937">After: the Okta-issued session</div>
+           <img style="display:block;width:100%" src="data:image/png;base64,${oktaPng.toString("base64")}">
+         </body>`,
+      );
+      await composite.locator("img").nth(1).waitFor();
+      await shoot(composite, "shot-session-pair.png");
+      await compositeContext.close();
+    }
+
+    // 7. Migration dashboard mid-cutover with the audit trail below. The
     // deliberate state: legacy flipped to Okta, portal to Dual, spa left Adfs.
+    // Modes come back to the seeded baseline first: earlier captures leave the
+    // portal in Okta, and the walk below assumes every row starts from Adfs.
     await resetAuditEvents();
+    await resetTrustModesToAdfs();
     {
       const context = await newContext(browser);
       const page = await context.newPage();

@@ -107,16 +107,21 @@ Counts and gates: [test-plan.md](test-plan.md).
    behavior (chooser in Dual; okta-sim's sign-in form in Okta).
 
 The cycle is Adfs -> Dual -> Okta -> Adfs, so you can always flip back the way you came
-(or all the way back from Okta in one press). The SQL fallback and audit verification
-procedure: [runbook.md](runbook.md).
+(or all the way back from Okta in one press). The same page carries the account side of
+the cutover: the **Directory provisioning** card's **Provision directory** button pushes
+`idn.Users` into okta-sim over SCIM and records a `DirectoryProvisioned` audit row (demo
+script step 2 below). The SQL fallback and audit verification procedure:
+[runbook.md](runbook.md).
 
 ## The demo script, in brief
 
 1. **Baseline**: with everything in Adfs mode, sign in to the portal via adfs-sim; show
    Permits and Cases (the bridge calling the SOAP service under SAML).
-2. **Provision**: dump the target directory (`corridor-ops scim-dump --url
-   http://localhost:8080 --token corridor-scim-token`) and show the okta-sim admin
-   console: the accounts already exist.
+2. **Provision**: sign in as the admin, open Admin > Migration, and press
+   **Provision directory**: the dashboard reports the run's created/updated/deactivated
+   counts, Admin > Audit shows the `DirectoryProvisioned` row, and the okta-sim admin
+   console (or `corridor-ops scim-dump --url http://localhost:8080 --token
+   corridor-scim-token`) lists the same accounts, now SCIM-managed.
 3. **Dual**: flip the portal; sign out; land on the chooser; sign in both ways.
 4. **Okta**: flip again; show the old path refused with a clear message; show
    `corridor-ops decode-token` on a fresh token (role, upn, expiry).

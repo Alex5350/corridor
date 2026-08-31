@@ -47,6 +47,10 @@ The interface and the consoles, captured from the running stack:
 |:---:|:---:|
 | ![Portal home signed in](docs/screenshots/shot-portal-home.png) | ![Permits list](docs/screenshots/shot-permits.png) |
 
+| Before the cutover: the ADFS-issued session on the portal home page | After the cutover: the same user, the same page, an Okta-issued session |
+|:---:|:---:|
+| ![Portal home under the ADFS-issued session](docs/screenshots/shot-session-adfs.png) | ![Portal home under the Okta-issued session](docs/screenshots/shot-session-okta.png) |
+
 | The migration dashboard mid-flip: who trusts whom, one button per app | The new provider's admin console: users, apps, assignments |
 |:---:|:---:|
 | ![Migration dashboard mid-flip](docs/screenshots/shot-migration-dashboard.png) | ![okta-sim admin console](docs/screenshots/shot-okta-admin.png) |

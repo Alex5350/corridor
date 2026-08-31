@@ -24,6 +24,11 @@ test.describe("portal sign-in via adfs-sim (Adfs mode)", () => {
     await expect(facts).toContainText(USERS.officer);
     await expect(facts).toContainText("Officer");
     await expect(facts).toContainText("adfs");
+
+    // The persistent header chip names the issuing provider on every page.
+    const badge = page.locator(".header-session .idp-badge");
+    await expect(badge).toHaveText("adfs");
+    await expect(badge).toHaveAttribute("title", "Session issued by");
   });
 
   test("the adfs-sim login page is the classic on-prem form", async ({ page }) => {

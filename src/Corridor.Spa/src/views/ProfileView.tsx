@@ -1,5 +1,5 @@
 import { useAuth } from "../auth/AuthContext";
-import { TokenClaims } from "../components/TokenClaims";
+import { TokenClaims, decodeJwt } from "../components/TokenClaims";
 import { Link } from "../router";
 
 /**
@@ -15,6 +15,7 @@ export function ProfileView({ onNavigate }: { onNavigate: (to: string) => void }
   const role = asString(profile.role) ?? "unknown";
   const email = asString(profile.email);
   const idToken = user?.id_token ?? "";
+  const identityProvider = readIdentityProvider(idToken);
 
   return (
     <>
@@ -38,7 +39,7 @@ export function ProfileView({ onNavigate }: { onNavigate: (to: string) => void }
             </>
           ) : null}
           <dt>Identity provider</dt>
-          <dd>okta-sim (Corridor migration target)</dd>
+          <dd>{identityProvider ?? "unknown"}</dd>
         </dl>
       </div>
       <div className="card">
@@ -64,4 +65,21 @@ export function ProfileView({ onNavigate }: { onNavigate: (to: string) => void }
 
 function asString(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+/**
+ * Reads the issuing provider off the ID token payload (the same decode the
+ * claims pane below uses): the idp claim when the provider sets one, otherwise
+ * the issuer. Null when no decodable token is held.
+ */
+function readIdentityProvider(idToken: string): string | null {
+  if (!idToken) {
+    return null;
+  }
+  try {
+    const { payload } = decodeJwt(idToken);
+    return asString(payload.idp) ?? asString(payload.iss);
+  } catch {
+    return null;
+  }
 }
