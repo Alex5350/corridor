@@ -22,6 +22,14 @@ public interface IMigrationAppRepository
     Task UpdateTrustModeAsync(string appKey, TrustMode mode, string flippedBy, DateTime flippedAtUtc, CancellationToken ct = default);
 }
 
+public interface IDirectoryUserRepository
+{
+    Task<IReadOnlyList<DirectoryUserAccount>> ListAsync(CancellationToken ct = default);
+
+    /// <summary>Records the SCIM id the provider assigned, so later runs update instead of re-create.</summary>
+    Task UpdateScimExternalIdAsync(string upn, string scimExternalId, CancellationToken ct = default);
+}
+
 public interface IAuditEventRepository
 {
     Task RecordAsync(AuditEvent auditEvent, CancellationToken ct = default);

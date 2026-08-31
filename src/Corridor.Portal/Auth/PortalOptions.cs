@@ -38,6 +38,12 @@ public sealed class PortalSiteOptions
 
     /// <summary>Base URL of the XACML policy decision point on okta-sim (ADR 0007).</summary>
     public string PdpBaseUrl { get; set; } = "http://localhost:8080";
+
+    /// <summary>Base URL of the SCIM provisioning endpoint on okta-sim (ADR 0006).</summary>
+    public string ScimBaseUrl { get; set; } = "http://localhost:8080";
+
+    /// <summary>Bearer token for the SCIM endpoint; the documented demo constant.</summary>
+    public string ScimToken { get; set; } = "corridor-scim-token";
 }
 
 public sealed class LegacyOptions

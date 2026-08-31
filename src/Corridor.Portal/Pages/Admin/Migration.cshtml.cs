@@ -8,7 +8,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace Corridor.Portal.Pages.Admin;
 
 [Authorize(Roles = "Admin")]
-public class MigrationModel(IMigrationAppRepository apps, TrustModeService trustModes) : PageModel
+public class MigrationModel(
+    IMigrationAppRepository apps,
+    TrustModeService trustModes,
+    DirectoryProvisioner provisioning) : PageModel
 {
     public IReadOnlyList<Models.MigrationApp> Apps { get; private set; } = [];
 
@@ -36,6 +39,26 @@ public class MigrationModel(IMigrationAppRepository apps, TrustModeService trust
         catch (InvalidOperationException)
         {
             ErrorMessage = $"Unknown application key {appKey}.";
+        }
+        Apps = await apps.ListAsync();
+        return Page();
+    }
+
+    /// <summary>
+    /// Provisions idn.Users into the target directory over the SCIM bridge. A provisioning
+    /// failure shows inline here; the provisioner only writes its audit event after every
+    /// account succeeded, so the trail never records a run that did not complete.
+    /// </summary>
+    public async Task<IActionResult> OnPostProvisionAsync()
+    {
+        try
+        {
+            var summary = await provisioning.ProvisionAsync(PortalClaims.ReadUpn(User) ?? "unknown");
+            StatusMessage = $"Directory provisioned into okta-sim: {summary.Describe()}.";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Directory provisioning failed: {ex.Message}";
         }
         Apps = await apps.ListAsync();
         return Page();

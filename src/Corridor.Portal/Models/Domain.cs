@@ -65,6 +65,15 @@ public sealed record TraceRequestCreate(
     string Serial,
     string RequesterUpn);
 
+/// <summary>One idn.Users row as provisioning sees it (ADR 0006).</summary>
+public sealed record DirectoryUserAccount(
+    int Id,
+    string Upn,
+    string DisplayName,
+    string Role,
+    string? ScimExternalId,
+    bool Active);
+
 public sealed record MigrationApp(
     string AppKey,
     string AppName,

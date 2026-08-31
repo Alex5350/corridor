@@ -111,6 +111,21 @@ main.shell {
     color: #dce8f8;
 }
 
+/* Session provider chip: which identity provider issued the current session */
+.idp-badge {
+    display: inline-block;
+    padding: 0.05rem 0.5rem;
+    border-radius: 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--blue-dark);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    white-space: nowrap;
+    cursor: default;
+}
+
 .signin {
     color: #ffffff;
 }

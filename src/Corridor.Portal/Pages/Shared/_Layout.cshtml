@@ -26,7 +26,12 @@
             <div class="header-session">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
+                    var identityProvider = Corridor.Portal.Auth.PortalClaims.ReadIdentityProvider(User);
                     <span class="who">@User.Identity.Name</span>
+                    @if (identityProvider is not null)
+                    {
+                        <span class="idp-badge" title="Session issued by">@identityProvider</span>
+                    }
                     <form class="inline-form" method="post" asp-page="/Logout">
                         <button type="submit" class="link-button">Sign out</button>
                     </form>

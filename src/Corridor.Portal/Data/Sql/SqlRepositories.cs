@@ -181,6 +181,47 @@ public sealed class SqlMigrationAppRepository(SqlConnectionFactory factory) : IM
     }
 }
 
+public sealed class SqlDirectoryUserRepository(SqlConnectionFactory factory) : IDirectoryUserRepository
+{
+    public async Task<IReadOnlyList<DirectoryUserAccount>> ListAsync(CancellationToken ct = default)
+    {
+        const string sql = """
+            SELECT Id, Upn, DisplayName, Role, ScimExternalId, Active
+            FROM idn.Users
+            ORDER BY Upn;
+            """;
+        await using var connection = await factory.OpenAsync(ct);
+        await using var command = new SqlCommand(sql, connection);
+        var accounts = new List<DirectoryUserAccount>();
+        await using var reader = await command.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            accounts.Add(new DirectoryUserAccount(
+                reader.GetInt32(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4),
+                reader.GetBoolean(5)));
+        }
+        return accounts;
+    }
+
+    public async Task UpdateScimExternalIdAsync(string upn, string scimExternalId, CancellationToken ct = default)
+    {
+        const string sql = """
+            UPDATE idn.Users
+            SET ScimExternalId = @ScimExternalId
+            WHERE Upn = @Upn;
+            """;
+        await using var connection = await factory.OpenAsync(ct);
+        await using var command = new SqlCommand(sql, connection);
+        command.Parameters.Add("@ScimExternalId", SqlDbType.NVarChar, 64).Value = scimExternalId;
+        command.Parameters.Add("@Upn", SqlDbType.NVarChar, 160).Value = upn;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+}
+
 public sealed class SqlAuditEventRepository(SqlConnectionFactory factory) : IAuditEventRepository
 {
     public async Task RecordAsync(AuditEvent auditEvent, CancellationToken ct = default)

@@ -50,6 +50,19 @@
 </table>
 
 <div class="card">
+    <h2>Directory provisioning</h2>
+    <p class="field-hint">
+        Synchronizes every idn.Users account into the Okta directory over the SCIM 2.0 bridge:
+        accounts without a SCIM id are created (the returned id is recorded in SQL), accounts
+        that already have one are updated with userName, displayName, active, and their role,
+        and accounts switched off in SQL are deactivated. One audit row per run.
+    </p>
+    <form class="inline-form" method="post" asp-page-handler="Provision">
+        <button class="button" type="submit">Provision directory</button>
+    </form>
+</div>
+
+<div class="card">
     <h2>What the modes mean</h2>
     <dl class="facts">
         <dt>Adfs</dt>

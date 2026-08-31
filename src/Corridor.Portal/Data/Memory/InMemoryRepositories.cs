@@ -110,6 +110,46 @@ public sealed class InMemoryMigrationAppRepository : IMigrationAppRepository
     }
 }
 
+/// <summary>
+/// Mirrors idn.Users for the in-memory boot: the four contract users, none with a
+/// SCIM external id yet, matching the seeded table before any provisioning run.
+/// </summary>
+public sealed class InMemoryDirectoryUserRepository(IEnumerable<DirectoryUserAccount>? seed = null) : IDirectoryUserRepository
+{
+    private readonly object _gate = new();
+    private readonly Dictionary<string, DirectoryUserAccount> _accounts =
+        (seed ?? DefaultAccounts()).ToDictionary(a => a.Upn, a => a, StringComparer.Ordinal);
+
+    public static IEnumerable<DirectoryUserAccount> DefaultAccounts() =>
+    [
+        new DirectoryUserAccount(1, "admin@corridor.example", "Dana Whitfield", "Admin", null, Active: true),
+        new DirectoryUserAccount(2, "inspector@corridor.example", "Miguel Sandoval", "Inspector", null, Active: true),
+        new DirectoryUserAccount(3, "officer@corridor.example", "Priya Raman", "Officer", null, Active: true),
+        new DirectoryUserAccount(4, "clerk@corridor.example", "Tom Biestecker", "Clerk", null, Active: true)
+    ];
+
+    public Task<IReadOnlyList<DirectoryUserAccount>> ListAsync(CancellationToken ct = default)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<DirectoryUserAccount> accounts = [.. _accounts.Values.OrderBy(a => a.Upn, StringComparer.Ordinal)];
+            return Task.FromResult(accounts);
+        }
+    }
+
+    public Task UpdateScimExternalIdAsync(string upn, string scimExternalId, CancellationToken ct = default)
+    {
+        lock (_gate)
+        {
+            if (_accounts.TryGetValue(upn, out var account))
+            {
+                _accounts[upn] = account with { ScimExternalId = scimExternalId };
+            }
+        }
+        return Task.CompletedTask;
+    }
+}
+
 public sealed class InMemoryAuditEventRepository : IAuditEventRepository
 {
     private readonly object _gate = new();

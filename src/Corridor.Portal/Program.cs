@@ -6,6 +6,7 @@ using Corridor.Portal.Data;
 using Corridor.Portal.Data.Memory;
 using Corridor.Portal.Data.Sql;
 using Corridor.Portal.Services;
+using Corridor.Portal.Services.Scim;
 using Corridor.Portal.Services.TraceLink;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -94,6 +95,25 @@ builder.Services.AddSingleton<IPdpClient>(sp => new PdpHttpClient(
     sp.GetRequiredService<TimeProvider>(),
     sp.GetRequiredService<ILogger<PdpHttpClient>>()));
 
+// The provisioning side of the cutover story (ADR 0006): the migration dashboard
+// synchronizes idn.Users into the target directory over SCIM. The scim named client
+// carries the bearer token and a 5 second cap so a stuck directory cannot pin the
+// dashboard request; failures surface inline on the page, never as a fake success.
+var scimBaseUrl = builder.Configuration["Portal:ScimBaseUrl"] is { Length: > 0 } configuredScimBase
+    ? configuredScimBase
+    : new PortalSiteOptions().ScimBaseUrl;
+var scimToken = builder.Configuration["Portal:ScimToken"] is { Length: > 0 } configuredScimToken
+    ? configuredScimToken
+    : new PortalSiteOptions().ScimToken;
+builder.Services.AddHttpClient(ScimClient.ClientName, client =>
+{
+    client.BaseAddress = new Uri(scimBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+builder.Services.AddSingleton<IScimProvisioner>(sp => new ScimClient(
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient(ScimClient.ClientName),
+    scimToken));
+
 var useInMemory = builder.Configuration.GetValue<bool>("Data:UseInMemory");
 var connectionString = builder.Configuration.GetConnectionString("Corridor");
 if (useInMemory || string.IsNullOrWhiteSpace(connectionString))
@@ -102,6 +122,7 @@ if (useInMemory || string.IsNullOrWhiteSpace(connectionString))
     builder.Services.AddSingleton<IMigrationAppRepository>(new InMemoryMigrationAppRepository());
     builder.Services.AddSingleton<IAuditEventRepository, InMemoryAuditEventRepository>();
     builder.Services.AddSingleton<IAssignmentRepository>(new InMemoryAssignmentRepository());
+    builder.Services.AddSingleton<IDirectoryUserRepository>(new InMemoryDirectoryUserRepository());
 }
 else
 {
@@ -110,7 +131,9 @@ else
     builder.Services.AddScoped<IMigrationAppRepository, SqlMigrationAppRepository>();
     builder.Services.AddScoped<IAuditEventRepository, SqlAuditEventRepository>();
     builder.Services.AddScoped<IAssignmentRepository, SqlAssignmentRepository>();
+    builder.Services.AddScoped<IDirectoryUserRepository, SqlDirectoryUserRepository>();
 }
+builder.Services.AddScoped<DirectoryProvisioner>();
 
 var oktaOptions = builder.Configuration.GetSection("Okta").Get<OktaOptions>() ?? new OktaOptions();
 
