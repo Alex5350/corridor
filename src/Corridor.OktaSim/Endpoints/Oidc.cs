@@ -13,9 +13,17 @@ namespace Corridor.OktaSim.Endpoints;
 /// refresh rotation, client credentials), JWKS with a rotating kid, userinfo,
 /// and logout. The authorize endpoint also serves a minimal login form for
 /// synthetic users; login_hint short-circuits it for scripted demo flows.
+/// Every endpoint here carries the "spa" CORS policy so the SPA's browser-side
+/// oidc-client-ts can reach it cross-origin; no other endpoint group does.
 /// </summary>
 public static class OidcEndpoints
 {
+    /// <summary>Name of the CORS policy (defined in Program) that lets the browser SPA run OIDC against this simulator.</summary>
+    public const string SpaCorsPolicy = "spa";
+
+    /// <summary>Default SPA origin allowed by the CORS policy when OktaSim:SpaOrigins is not configured.</summary>
+    public const string DefaultSpaOrigin = "http://localhost:5173";
+
     public static IEndpointRouteBuilder MapOidcEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/.well-known/openid-configuration", (TokenService tokens) =>
@@ -39,12 +47,12 @@ public static class OidcEndpoints
                 ["code_challenge_methods_supported"] = new[] { "S256" },
                 ["claims_supported"] = new[] { "sub", "name", "preferred_username", "email", "role", "groups", "upn" },
             });
-        });
+        }).RequireCors(SpaCorsPolicy);
 
-        app.MapGet("/authorize", GetAuthorizeAsync);
-        app.MapPost("/authorize", PostAuthorizeAsync);
+        app.MapGet("/authorize", GetAuthorizeAsync).RequireCors(SpaCorsPolicy);
+        app.MapPost("/authorize", PostAuthorizeAsync).RequireCors(SpaCorsPolicy);
 
-        app.MapPost("/token", ExchangeTokenAsync);
+        app.MapPost("/token", ExchangeTokenAsync).RequireCors(SpaCorsPolicy);
 
         app.MapMethods("/jwks", [HttpMethods.Get, HttpMethods.Post], (SigningKeys keys) =>
         {
@@ -61,9 +69,9 @@ public static class OidcEndpoints
                 }).ToArray(),
             };
             return Results.Json(body);
-        });
+        }).RequireCors(SpaCorsPolicy);
 
-        app.MapGet("/userinfo", GetUserinfoAsync);
+        app.MapGet("/userinfo", GetUserinfoAsync).RequireCors(SpaCorsPolicy);
 
         app.MapGet("/logout", (HttpRequest request, ClientRegistry clients) =>
         {
@@ -83,7 +91,7 @@ public static class OidcEndpoints
                 + "<body style=\"font-family:system-ui;margin:3rem\"><h1>Signed out</h1>"
                 + "<p>You are signed out of the Corridor Okta simulation.</p></body></html>",
                 "text/html; charset=utf-8");
-        });
+        }).RequireCors(SpaCorsPolicy);
 
         return app;
     }

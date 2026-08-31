@@ -35,7 +35,29 @@ else
 // XACML PDP: policies from the repo's policies/ directory with an in-code fallback.
 builder.Services.AddSingleton<PdpEngine>();
 
+// CORS for the browser-side OIDC flow: the SPA's oidc-client-ts fetches
+// discovery, JWKS, token, and userinfo with XHR from its own origin, so the
+// OIDC endpoint group must answer cross-origin. The "spa" policy is applied
+// only to those endpoints (RequireCors in OidcEndpoints); SCIM, the PDP,
+// SAML, admin, and health stay CORS-free. Origins are config-driven as a
+// comma-separated list (OktaSim:SpaOrigins) and no credentials are allowed:
+// the SPA is a public client and nothing here relies on cookies.
+var spaOrigins = (builder.Configuration["OktaSim:SpaOrigins"] ?? OidcEndpoints.DefaultSpaOrigin)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+if (spaOrigins.Length == 0)
+{
+    spaOrigins = [OidcEndpoints.DefaultSpaOrigin];
+}
+builder.Services.AddCors(options => options.AddPolicy(OidcEndpoints.SpaCorsPolicy, policy => policy
+    .WithOrigins(spaOrigins)
+    .WithMethods("GET", "POST", "OPTIONS")
+    .WithHeaders("Authorization", "Content-Type")
+    .DisallowCredentials()));
+
 var app = builder.Build();
+
+// Required for endpoint-routing CORS (RequireCors) to terminate preflights.
+app.UseCors();
 
 app.MapHealthEndpoints();
 app.MapAdminEndpoints();
