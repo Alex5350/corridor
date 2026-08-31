@@ -30,14 +30,20 @@ ENV VITE_OIDC_AUTHORITY=${VITE_OIDC_AUTHORITY} \
 RUN npm run build
 
 FROM nginx:alpine AS final
-# Serve the SPA on the contract port 5173; SPA router fallback to index.html
-# and immutable caching for hashed assets. Generated inline so the src tree
-# stays free of docker-only config files.
+# Serve the SPA on the contract port 5173; SPA router fallback to index.html,
+# immutable caching for hashed assets, and the same strict response headers the
+# vite preview server sends (the CSP from src/Corridor.Spa/vite.config.ts,
+# production flavor: no unsafe-inline anywhere). Generated inline so the src
+# tree stays free of docker-only config files.
 RUN printf 'server {\n\
     listen 5173;\n\
     server_name _;\n\
     root /usr/share/nginx/html;\n\
     index index.html;\n\
+    add_header Content-Security-Policy "default-src \'self\'; script-src \'self\'; style-src \'self\'; img-src \'self\' data:; font-src \'self\'; connect-src \'self\' http://localhost:8080 http://localhost:5200; frame-src \'self\' http://localhost:8080; object-src \'none\'; base-uri \'self\'; form-action \'self\' http://localhost:8080; frame-ancestors \'none\'" always;\n\
+    add_header X-Content-Type-Options "nosniff" always;\n\
+    add_header X-Frame-Options "DENY" always;\n\
+    add_header Referrer-Policy "no-referrer" always;\n\
     location /assets/ {\n\
         add_header Cache-Control "public, max-age=31536000, immutable";\n\
         try_files $uri =404;\n\
