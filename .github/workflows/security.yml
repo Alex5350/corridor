@@ -27,7 +27,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Scan full history for hardcoded secrets
-        uses: gitleaks/gitleaks-action@ff98106e4c1b47b5c50f372521ea966a5e35e3e5 # v2
+        uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # The committed demo constants (client secrets, the scim token, dev certs)
@@ -51,6 +51,7 @@ jobs:
           languages: csharp
           # The SPA is JavaScript without server-side sinks; scanning C# covers the
           # token, XML, and SQL surfaces where this repo's risk lives.
+      - uses: github/codeql-action/autobuild@v3
       - uses: github/codeql-action/analyze@v3
         with:
           category: "/language:csharp"
