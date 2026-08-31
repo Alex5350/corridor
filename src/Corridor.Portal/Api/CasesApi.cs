@@ -32,6 +32,12 @@ public static class CasesApi
             {
                 return UpstreamUnreachable();
             }
+            // HttpClient timeouts surface as TaskCanceledException (an OperationCanceledException):
+            // the filter keeps a genuine caller cancellation propagating instead of becoming a 502.
+            catch (OperationCanceledException) when (ct.IsCancellationRequested is false)
+            {
+                return UpstreamTimeout();
+            }
         });
 
         group.MapGet("/{caseNumber}", async (string caseNumber,
@@ -41,8 +47,8 @@ public static class CasesApi
             {
                 var found = await traceLink.GetCaseAsync(caseNumber, ct);
                 return found is null
-                    ? Results.Problem(title: "Trace case not found.", statusCode: 404, detail: $"No case {caseNumber}.")
-                    : Results.Ok(found);
+                ? Results.Problem(title: "Trace case not found.", statusCode: 404, detail: $"No case {caseNumber}.")
+                : Results.Ok(found);
             }
             catch (TraceLinkFaultException fault)
             {
@@ -51,6 +57,12 @@ public static class CasesApi
             catch (HttpRequestException)
             {
                 return UpstreamUnreachable();
+            }
+            // HttpClient timeouts surface as TaskCanceledException (an OperationCanceledException):
+            // the filter keeps a genuine caller cancellation propagating instead of becoming a 502.
+            catch (OperationCanceledException) when (ct.IsCancellationRequested is false)
+            {
+                return UpstreamTimeout();
             }
         });
 
@@ -83,6 +95,12 @@ public static class CasesApi
             {
                 return UpstreamUnreachable();
             }
+            // HttpClient timeouts surface as TaskCanceledException (an OperationCanceledException):
+            // the filter keeps a genuine caller cancellation propagating instead of becoming a 502.
+            catch (OperationCanceledException) when (ct.IsCancellationRequested is false)
+            {
+                return UpstreamTimeout();
+            }
         });
 
         return app;
@@ -103,6 +121,16 @@ public static class CasesApi
         return Results.Problem(
             title: "The legacy trace service is unreachable.",
             statusCode: 502,
-            detail: "The SOAP endpoint did not answer.");
+            detail: "The SOAP endpoint did not answer.",
+            extensions: new Dictionary<string, object?> { ["faultSubcode"] = TraceLinkFaults.ServiceUnreachable });
+    }
+
+    private static IResult UpstreamTimeout()
+    {
+        return Results.Problem(
+            title: "The legacy trace service timed out.",
+            statusCode: 502,
+            detail: "The SOAP endpoint did not answer within the configured timeout.",
+            extensions: new Dictionary<string, object?> { ["faultSubcode"] = TraceLinkFaults.ServiceTimeout });
     }
 }

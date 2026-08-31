@@ -101,7 +101,7 @@ public sealed class LegacyCredentialFactory(
 /// traceparent header on every hop and logs the correlation id.
 /// </summary>
 public sealed class SoapTraceLinkClient(
-    HttpClient httpClient,
+    IHttpClientFactory httpClients,
     LegacyCredentialFactory credentials,
     IOptions<LegacyOptions> legacy,
     IHttpContextAccessor httpContextAccessor,
@@ -118,7 +118,7 @@ public sealed class SoapTraceLinkClient(
             new XElement(Cor + "requester", requester),
             new XElement(Cor + "statusFilter", statusFilter),
             new XElement(Cor + "maxRows", maxRows));
-        var responseBody = await CallAsync("SearchCases", body, ct);
+        var responseBody = await CallAsync(TraceLinkHttpClients.Read, "SearchCases", body, ct);
         var result = FindElement(responseBody, "SearchCasesResult") ?? responseBody;
         return [.. result.Elements().Where(e => e.Name.LocalName == "TraceCase").Select(ReadCase)];
     }
@@ -126,7 +126,7 @@ public sealed class SoapTraceLinkClient(
     public async Task<TraceCase?> GetCaseAsync(string caseNumber, CancellationToken ct = default)
     {
         var body = new XElement(Cor + "GetCase", new XElement(Cor + "caseNumber", caseNumber));
-        var responseBody = await CallAsync("GetCase", body, ct);
+        var responseBody = await CallAsync(TraceLinkHttpClients.Read, "GetCase", body, ct);
         var result = FindElement(responseBody, "GetCaseResult");
         return result is null || result.IsEmpty ? null : ReadCase(result);
     }
@@ -139,7 +139,7 @@ public sealed class SoapTraceLinkClient(
                 new XElement(Cor + "LicenseeName", request.LicenseeName),
                 new XElement(Cor + "RequesterUpn", request.RequesterUpn),
                 new XElement(Cor + "Serial", request.Serial)));
-        var responseBody = await CallAsync("CreateTraceRequest", body, ct);
+        var responseBody = await CallAsync(TraceLinkHttpClients.Write, "CreateTraceRequest", body, ct);
         var result = FindElement(responseBody, "CreateTraceRequestResult")?.Value
             ?? throw new TraceLinkFaultException(TraceLinkFaults.Unavailable, "The legacy service returned no case number.");
         return result.Trim();
@@ -151,12 +151,12 @@ public sealed class SoapTraceLinkClient(
             new XElement(Cor + "caseNumber", caseNumber),
             new XElement(Cor + "newStatus", newStatus),
             new XElement(Cor + "actor", actor));
-        var responseBody = await CallAsync("UpdateStatus", body, ct);
+        var responseBody = await CallAsync(TraceLinkHttpClients.Write, "UpdateStatus", body, ct);
         var result = FindElement(responseBody, "UpdateStatusResult")?.Value.Trim();
         return bool.TryParse(result, out var updated) && updated;
     }
 
-    private async Task<XElement> CallAsync(string action, XElement operationBody, CancellationToken ct)
+    private async Task<XElement> CallAsync(string clientName, string action, XElement operationBody, CancellationToken ct)
     {
         var credential = await credentials.GetCredentialAsync(ct);
         var security = credential.IsSamlAssertion
@@ -177,8 +177,9 @@ public sealed class SoapTraceLinkClient(
             request.Headers.Add("traceparent", traceparent);
         }
         var correlationId = Activity.Current?.Id ?? traceparent ?? "none";
-        logger.LogInformation("SOAP {Action} to {ServiceUrl} correlation {CorrelationId}", action, legacy.Value.ServiceUrl, correlationId);
+        logger.LogInformation("SOAP {Action} over {ClientName} to {ServiceUrl} correlation {CorrelationId}", action, clientName, legacy.Value.ServiceUrl, correlationId);
 
+        var httpClient = httpClients.CreateClient(clientName);
         using var response = await httpClient.SendAsync(request, ct);
         var xml = await response.Content.ReadAsStringAsync(ct);
         var document = XDocument.Parse(xml);

@@ -10,7 +10,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Polly;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,9 +38,34 @@ builder.Services.AddSingleton<ITrustedCertificateProvider, TrustedCertificatePro
 builder.Services.AddScoped<TrustModeService>();
 builder.Services.AddScoped<LegacyCredentialFactory>();
 builder.Services.AddSingleton<ChecklistService>();
-builder.Services.AddHttpClient<SoapTraceLinkClient>();
-builder.Services.AddHttpClient<OktaServiceTokenClient>();
+// The SOAP hop runs on two named clients, split by idempotency rather than a per-call flag
+// through one shared pipeline: a flag puts the "is this safe to replay" decision at every
+// call site, where a forgotten flag silently retries a mutating call. Read operations
+// (SearchCases, GetCase) are safe to replay, so the read client retries once on a transient
+// failure. Write operations (CreateTraceRequest, UpdateStatus) mutate the legacy system and
+// replaying an ambiguous failure could double-create a case or re-apply a status transition,
+// so the write client has no retry. Both cap a call at 8 seconds.
+builder.Services.AddHttpClient(TraceLinkHttpClients.Read, client => client.Timeout = TimeSpan.FromSeconds(8))
+    .AddResilienceHandler("tracelink-read", pipeline => pipeline.AddRetry(new HttpRetryStrategyOptions
+    {
+        MaxRetryAttempts = 1,
+        BackoffType = DelayBackoffType.Constant,
+        Delay = TimeSpan.FromMilliseconds(500),
+        UseJitter = false
+    }));
+builder.Services.AddHttpClient(TraceLinkHttpClients.Write, client => client.Timeout = TimeSpan.FromSeconds(8));
+builder.Services.AddTransient<SoapTraceLinkClient>();
 builder.Services.AddTransient<ITraceLinkClient>(sp => sp.GetRequiredService<SoapTraceLinkClient>());
+// The service credential fetch happens on the hot path of every SOAP call, so it gets one
+// retry on transient failures and a 3 second cap; the token itself stays cached 10 minutes.
+builder.Services.AddHttpClient<OktaServiceTokenClient>(client => client.Timeout = TimeSpan.FromSeconds(3))
+    .AddResilienceHandler("okta-service-token", pipeline => pipeline.AddRetry(new HttpRetryStrategyOptions
+    {
+        MaxRetryAttempts = 1,
+        BackoffType = DelayBackoffType.Constant,
+        Delay = TimeSpan.FromMilliseconds(500),
+        UseJitter = false
+    }));
 
 var useInMemory = builder.Configuration.GetValue<bool>("Data:UseInMemory");
 var connectionString = builder.Configuration.GetConnectionString("Corridor");

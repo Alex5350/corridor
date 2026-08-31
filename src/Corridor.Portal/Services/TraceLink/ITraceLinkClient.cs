@@ -15,6 +15,26 @@ public static class TraceLinkFaults
     public const string CaseNotFound = "cor:CaseNotFound";
     public const string ValidationError = "cor:ValidationError";
     public const string Unavailable = "cor:ServiceUnavailable";
+    public const string ServiceTimeout = "cor:TraceServiceTimeout";
+    public const string ServiceUnreachable = "cor:TraceServiceUnreachable";
+}
+
+/// <summary>
+/// Named HTTP clients for the SOAP hop. Two names, not one, because retry safety depends on
+/// the operation: SearchCases and GetCase are idempotent reads and may replay after a
+/// transient failure, while CreateTraceRequest and UpdateStatus mutate the legacy system and
+/// must never be replayed after an ambiguous outcome (a duplicate case, a re-applied
+/// transition). Routing through distinct client names puts that decision in the pipeline
+/// configuration where it is auditable, instead of on a per-call flag every caller must
+/// remember to pass.
+/// </summary>
+public static class TraceLinkHttpClients
+{
+    /// <summary>Idempotent operations (SearchCases, GetCase): 8 second timeout, one retry on transient errors.</summary>
+    public const string Read = "tracelink-read";
+
+    /// <summary>Mutating operations (CreateTraceRequest, UpdateStatus): 8 second timeout, no retry.</summary>
+    public const string Write = "tracelink-write";
 }
 
 /// <summary>Client for the TraceLink SOAP 1.1 service. The real implementation posts envelopes over HTTP; tests substitute a fake.</summary>

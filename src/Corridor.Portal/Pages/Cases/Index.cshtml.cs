@@ -61,6 +61,12 @@ public class IndexModel(ITraceLinkClient traceLink) : PageModel
         {
             ErrorMessage = "The trace service is unreachable. Nothing was created.";
         }
+        // HttpClient timeouts surface as TaskCanceledException (an OperationCanceledException):
+        // the filter keeps a genuine client disconnect propagating instead of masking it as a timeout.
+        catch (OperationCanceledException) when (HttpContext.RequestAborted.IsCancellationRequested is false)
+        {
+            ErrorMessage = "The trace service timed out. Nothing was created.";
+        }
         Create = new CreateInput();
         await LoadAsync();
         return Page();
@@ -92,6 +98,12 @@ public class IndexModel(ITraceLinkClient traceLink) : PageModel
         {
             ErrorMessage = "The trace service is unreachable. Nothing was updated.";
         }
+        // HttpClient timeouts surface as TaskCanceledException (an OperationCanceledException):
+        // the filter keeps a genuine client disconnect propagating instead of masking it as a timeout.
+        catch (OperationCanceledException) when (HttpContext.RequestAborted.IsCancellationRequested is false)
+        {
+            ErrorMessage = "The trace service timed out. Nothing was updated.";
+        }
         await LoadAsync();
         return Page();
     }
@@ -100,7 +112,30 @@ public class IndexModel(ITraceLinkClient traceLink) : PageModel
     {
         var filter = StatusOptions.Contains(StatusFilter, StringComparer.Ordinal) ? StatusFilter : null;
         var requester = PortalClaims.ReadUpn(User) ?? "unknown";
-        Cases = await traceLink.SearchCasesAsync(requester, filter, 50);
+        // The case list is a read, not the page's reason for being: when the trace client
+        // fails here the page still renders with an inline error panel and an empty table,
+        // so the create and status forms stay usable while the legacy service is down.
+        try
+        {
+            Cases = await traceLink.SearchCasesAsync(requester, filter, 50);
+        }
+        catch (TraceLinkFaultException fault)
+        {
+            Cases = [];
+            ErrorMessage = $"The trace service failed while loading cases: {fault.Message} ({fault.Subcode})";
+        }
+        catch (HttpRequestException)
+        {
+            Cases = [];
+            ErrorMessage = "The trace service is unreachable. The case list below is empty.";
+        }
+        // HttpClient timeouts surface as TaskCanceledException (an OperationCanceledException):
+        // the filter keeps a genuine client disconnect propagating instead of masking it as a timeout.
+        catch (OperationCanceledException) when (HttpContext.RequestAborted.IsCancellationRequested is false)
+        {
+            Cases = [];
+            ErrorMessage = "The trace service timed out. The case list below is empty.";
+        }
     }
 
     public sealed class CreateInput
