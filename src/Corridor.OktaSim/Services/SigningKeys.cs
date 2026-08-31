@@ -175,8 +175,12 @@ public sealed class SigningKeys : IDisposable
 
     public void Dispose()
     {
-        _currentRsa.Dispose();
-        _retiredRsa.Dispose();
-        SamlCertificate.Dispose();
+        // Deliberately does NOT dispose the RSA keys or the derived certificate.
+        // This object is a process lifetime singleton: parallel test hosts load the
+        // SAME committed PEM, and the token handler's shared crypto provider cache
+        // binds signature providers to the first loaded RSA. Disposing it when one
+        // host shuts down breaks signing for every other host still running (seen
+        // live as ObjectDisposedException from TrySignHash under parallel suites).
+        // The OS reclaims the handles at process exit; nothing is leaked while alive.
     }
 }
