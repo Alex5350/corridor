@@ -36,12 +36,16 @@ const strictHeaders = {
 };
 
 /**
- * Dev-only addition: 'unsafe-inline' for scripts. The React plugin injects a
- * small inline module into index.html to bootstrap fast refresh, and Vite has
- * no nonce mechanism for it. Scripts from other origins stay blocked and
- * 'unsafe-eval' stays out; the strict header above governs preview/production.
+ * Dev-only addition: 'unsafe-inline' for scripts AND styles. The React plugin
+ * injects a small inline module into index.html to bootstrap fast refresh, and
+ * the dev server delivers CSS as inline <style> elements rather than same-origin
+ * files, so a strict style-src silently strips all styling in development.
+ * Scripts and styles from other origins stay blocked and 'unsafe-eval' stays
+ * out; the strict header above governs preview/production.
  */
-const devCsp = csp.replace("script-src 'self'", "script-src 'self' 'unsafe-inline'");
+const devCsp = csp
+  .replace("script-src 'self'", "script-src 'self' 'unsafe-inline'")
+  .replace("style-src 'self'", "style-src 'self' 'unsafe-inline'");
 
 export default defineConfig({
   plugins: [react()],

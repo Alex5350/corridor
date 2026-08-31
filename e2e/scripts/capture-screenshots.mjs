@@ -173,6 +173,14 @@ async function main() {
       await page.getByRole("button", { name: "Sign in with Okta" }).click();
       await page.getByRole("heading", { name: "Assignments" }).waitFor({ timeout: 30_000 });
       await page.locator(".assignment-card").nth(5).waitFor();
+      // Cold-boot guard: Vite applies the stylesheet a tick after first render, so
+      // waiting for the cards alone can capture an unstyled page. Require the CSS
+      // to have actually landed (a style tag exists and the body is painted).
+      await page.waitForFunction(
+        () =>
+          document.styleSheets.length > 0 &&
+          getComputedStyle(document.body).backgroundColor !== "rgba(0, 0, 0, 0)",
+      );
       await shoot(page, "shot-spa-assignments.png");
       await context.close();
     }
